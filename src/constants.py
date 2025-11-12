@@ -1,0 +1,27 @@
+from enum import Enum
+from typing import List
+
+from .handlers import add_birthday, add_contact, change_contact, birthdays, show_birthday, show_all, show_phone
+
+STORAGE_PATH = "data/addressbook.pkl"
+
+
+class Command(Enum):
+    ADD = 0, add_contact
+    CHANGE = 1, change_contact
+    CLOSE = 2, None
+    EXIT = 3, None
+    HELLO = 4, None
+    PHONE = 5, show_phone
+    ALL = 6, show_all
+    ADD_BIRTHDAY = 7, add_birthday
+    SHOW_BIRTHDAY = 8, show_birthday
+    BIRTHDAYS = 9, birthdays
+
+    def __init__(self, order, func):
+        self.order = order
+        self.func = func
+
+    @classmethod
+    def available_commands(cls) -> List[str]:
+        return [x.name.replace("_", "-") for x in cls]
