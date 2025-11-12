@@ -40,9 +40,9 @@ def parse_input(user_input: str):
         raise InvalidInputError(
             f"Your input is incorrect. You forgot additional parameters. {use_params}"
         )
-    elif command in (Command.ALL, Command.BIRTHDAYS) and len(args) != 0:
+    elif command in (Command.ALL, Command.BIRTHDAYS, Command.HELP) and len(args) != 0:
         raise InvalidInputError(
-            f"Your input is incorrect. Commands '{Command.ALL}' and '{Command.BIRTHDAYS}' doesn't need additional parameters."
+            f"Your input is incorrect. Commands '{Command.ALL}', '{Command.BIRTHDAYS}', and '{Command.HELP}' doesn't need additional parameters."
         )
 
     return command, args

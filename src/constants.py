@@ -1,7 +1,16 @@
 from enum import Enum
 from typing import List
 
-from .handlers import add_birthday, add_contact, change_contact, birthdays, show_birthday, show_all, show_phone
+from .handlers import (
+    add_birthday,
+    add_contact,
+    change_contact,
+    birthdays,
+    show_birthday,
+    show_all,
+    show_phone,
+    show_help,
+)
 
 STORAGE_PATH = "data/addressbook.pkl"
 
@@ -17,6 +26,7 @@ class Command(Enum):
     ADD_BIRTHDAY = 7, add_birthday
     SHOW_BIRTHDAY = 8, show_birthday
     BIRTHDAYS = 9, birthdays
+    HELP = 10, show_help
 
     def __init__(self, order, func):
         self.order = order

@@ -1,10 +1,36 @@
-from typing import List
+from typing import List, Dict
 
 from prettytable import PrettyTable
 
 from .exceptions import AddressBookError, RecordNotFoundError
 from .models import AddressBook, Record
 
+
+_COMMAND_DESCRIPTIONS: Dict[str, str] = {
+    "hello": "Get a greeting from the bot.",
+    "add": "Add a new contact or a new phone to an existing contact. A phone number must be 10 digits long and contain digits only.",
+    "change": "Change a phone number for a contact. A phone number must be 10 digits long and contain digits only.",
+    "phone": "Show all phone numbers for a contact.",
+    "all": "Show all contacts in the address book.",
+    "add-birthday": "Add a birthday for a contact.",
+    "show-birthday": "Show the birthday for a contact.",
+    "birthdays": "Show upcoming birthdays for the next week.",
+    "help": "Show this help message.",
+    "close": "Close the program.",
+}
+
+_COMMAND_USAGE: Dict[str, str] = {
+    "hello": "hello",
+    "add": "add [name] [phone]",
+    "change": "change [name] [old phone] [new phone]",
+    "phone": "phone [name]",
+    "all": "all",
+    "add-birthday": "add-birthday [name] [DD.MM.YYYY]",
+    "show-birthday": "show-birthday [name]",
+    "birthdays": "birthdays",
+    "help": "help",
+    "close": "close, exit",
+}
 
 
 def input_error(func):
@@ -56,7 +82,9 @@ def show_birthday(args: List[str], address_book: AddressBook) -> str:
     record = address_book.find(name)
     if record is None:
         raise RecordNotFoundError(f"Contact '{name}' doesn't exist.")
-    return record.birthday
+    if record.birthday is None:
+        return f"Contact '{name}' doesn't have a birthday set."
+    return str(record.birthday)
 
 
 @input_error
@@ -107,4 +135,16 @@ def birthdays(_: List[str], address_book: AddressBook) -> str:
             for x in address_book.get_upcoming_birthdays()
         ]
     )
+    return str(table)
+
+
+def show_help(*args, **kwargs) -> str:
+    table = PrettyTable(title="AVAILABLE COMMANDS", field_names=["Command", "Description"])
+    table.align["Command"] = "l"
+    table.align["Description"] = "l"
+
+    for cmd in _COMMAND_DESCRIPTIONS:
+        usage = "close, exit" if cmd == "close" else _COMMAND_USAGE[cmd]
+        table.add_row([usage, _COMMAND_DESCRIPTIONS[cmd]])
+
     return str(table)
