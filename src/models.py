@@ -44,10 +44,17 @@ class Phone(Field):
 class Birthday(Field):
     def __init__(self, value):
         try:
-            value = datetime.strptime(value.strip(), "%d.%m.%Y")
-            super().__init__(value)
+            parsed_date = datetime.strptime(value.strip(), "%d.%m.%Y")
         except ValueError:
             raise InvalidBirthdayError("Invalid date format. Use DD.MM.YYYY")
+        
+        today = datetime.now().date()
+        birthday_date = parsed_date.date()
+        
+        if birthday_date > today:
+            raise InvalidBirthdayError("Birthday cannot be in the future.")
+        
+        super().__init__(parsed_date)
 
     def __str__(self):
         return self.value.strftime("%d.%m.%Y")
