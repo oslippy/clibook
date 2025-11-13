@@ -15,6 +15,7 @@ _COMMAND_DESCRIPTIONS: Dict[str, str] = {
     "add-birthday": "Add a birthday for a contact.",
     "show-birthday": "Show the birthday for a contact.",
     "birthdays": "Show upcoming birthdays for the next week.",
+    "search": "Search for contacts by a name substring.",
     "help": "Show this help message.",
     "close": "Close the program.",
 }
@@ -28,6 +29,7 @@ _COMMAND_USAGE: Dict[str, str] = {
     "add-birthday": "add-birthday [name] [DD.MM.YYYY]",
     "show-birthday": "show-birthday [name]",
     "birthdays": "birthdays",
+    "search": "search [query]",
     "help": "help",
     "close": "close, exit",
 }
@@ -135,6 +137,42 @@ def birthdays(_: List[str], address_book: AddressBook) -> str:
             for x in address_book.get_upcoming_birthdays()
         ]
     )
+    return str(table)
+
+
+@input_error
+def search_contacts(args: List[str], address_book: AddressBook) -> str:
+    """
+    Search for contacts by a name substring and display results in a table.
+    """
+
+    if not args:
+        raise ValueError("Please provide a search query.")
+    
+    query = args[0]
+    found_records: List[Record] = address_book.search_contacts(query)
+
+    if not found_records:
+        return f"No contacts found matching '{query}'."
+
+    # Create a table to display results
+    table = PrettyTable(
+        title=f"SEARCH RESULTS FOR '{query.upper()}'", 
+        field_names=["Name", "Phones", "Emails", "Address", "Birthday"]
+    )
+    table.align = "l"
+
+    for record in found_records:
+        table.add_row(
+            [
+                record.name.value,
+                "; ".join([phone.value for phone in record.phones]) if record.phones else "N/A",
+                "; ".join([email.value for email in record.emails]) if record.emails else "N/A",
+                record.address.value if record.address else "N/A",
+                record.birthday.value.strftime("%d.%m.%Y") if record.birthday else "N/A",
+            ]
+        )
+    
     return str(table)
 
 
