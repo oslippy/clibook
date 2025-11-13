@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
 from .exceptions import (
+    EmailNotFoundError,
+    InvalidAddressError,
     InvalidBirthdayError,
     InvalidEmailError,
     InvalidNameError,
@@ -80,7 +82,7 @@ class Email(Field):
 class Address(Field):
     def __init__(self, value):
         if not value or not value.strip():
-            raise ValueError("Address cannot be empty.")
+            raise InvalidAddressError("Address cannot be empty.")
         super().__init__(value.strip())
 
 
@@ -110,6 +112,25 @@ class Record:
             if phone_obj.value == phone:
                 return phone_obj
         raise PhoneNotFoundError(f"Phone {phone} not found in record.")
+
+    def find_email(self, email: str) -> Email:
+        for email_obj in self.emails:
+            if email_obj.value == email.lower().strip():
+                return email_obj
+        raise EmailNotFoundError(f"Email {email} not found in record.")
+
+    def add_email(self, email: str) -> None:
+        email_obj = Email(email)
+        self.emails.append(email_obj)
+
+    def remove_email(self, email: str) -> None:
+        email_to_remove = self.find_email(email)
+        self.emails.remove(email_to_remove)
+
+    def edit_email(self, old_email: str, new_email: str) -> None:
+        email_to_edit = self.find_email(old_email)
+        idx = self.emails.index(email_to_edit)
+        self.emails[idx] = Email(new_email)
 
     def add_birthday(self, birthday: str) -> None:
         self.birthday = Birthday(birthday)
