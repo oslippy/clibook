@@ -159,6 +159,19 @@ class AddressBook(UserDict):
         else:
             raise RecordNotFoundError(f"Record with name '{name}' not found.")
 
+    def search_contacts(self, query: str) -> List[Record]:
+        """
+        Search for contacts by a name substring (case-insensitive).
+        """
+        results: List[Record] = []
+        lower_query = query.lower()
+
+        for record in self.data.values():
+            if lower_query in record.name.value.lower():
+                results.append(record)
+
+        return results
+
     @property
     def is_empty(self) -> bool:
         return not bool(self.data)
