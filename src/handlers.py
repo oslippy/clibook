@@ -159,7 +159,10 @@ def show_email(args: List[str], address_book: AddressBook) -> str:
 def show_all(_: List[str], address_book: AddressBook) -> str:
     if address_book.is_empty:
         raise AddressBookError("Address Book is empty...")
-    table = PrettyTable(title="CONTACTS", field_names=["Name", "Phones", "Emails", "Address", "Birthday"])
+    table = PrettyTable(
+        title="CONTACTS",
+        field_names=["Name", "Phones", "Emails", "Address", "Birthday"],
+    )
     table.add_rows(
         [
             [
@@ -167,7 +170,9 @@ def show_all(_: List[str], address_book: AddressBook) -> str:
                 [x.value for x in record.phones],
                 [x.value for x in record.emails] if record.emails else "N/A",
                 record.address.value if record.address else "N/A",
-                record.birthday.value.strftime("%d.%m.%Y") if record.birthday else "N/A",
+                record.birthday.value.strftime("%d.%m.%Y")
+                if record.birthday
+                else "N/A",
             ]
             for _, record in address_book.records.items()
         ]
@@ -203,7 +208,7 @@ def search_contacts(args: List[str], address_book: AddressBook) -> str:
     # Create a table to display results
     table = PrettyTable(
         title=f"SEARCH RESULTS FOR '{query.upper()}'",
-        field_names=["Name", "Phones", "Emails", "Address", "Birthday"]
+        field_names=["Name", "Phones", "Emails", "Address", "Birthday"],
     )
     table.align["Name"] = "l"
     table.align["Phones"] = "l"
@@ -215,10 +220,16 @@ def search_contacts(args: List[str], address_book: AddressBook) -> str:
         table.add_row(
             [
                 record.name.value,
-                "; ".join([phone.value for phone in record.phones]) if record.phones else "N/A",
-                "; ".join([email.value for email in record.emails]) if record.emails else "N/A",
+                "; ".join([phone.value for phone in record.phones])
+                if record.phones
+                else "N/A",
+                "; ".join([email.value for email in record.emails])
+                if record.emails
+                else "N/A",
                 record.address.value if record.address else "N/A",
-                record.birthday.value.strftime("%d.%m.%Y") if record.birthday else "N/A",
+                record.birthday.value.strftime("%d.%m.%Y")
+                if record.birthday
+                else "N/A",
             ]
         )
 
@@ -226,7 +237,9 @@ def search_contacts(args: List[str], address_book: AddressBook) -> str:
 
 
 def show_help(*args, **kwargs) -> str:
-    table = PrettyTable(title="AVAILABLE COMMANDS", field_names=["Command", "Description"])
+    table = PrettyTable(
+        title="AVAILABLE COMMANDS", field_names=["Command", "Description"]
+    )
     table.align["Command"] = "l"
     table.align["Description"] = "l"
 

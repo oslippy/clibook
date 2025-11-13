@@ -96,9 +96,9 @@ class Record:
 
     def __setstate__(self, state):
         self.__dict__ = state
-        if not hasattr(self, 'emails'):
+        if not hasattr(self, "emails"):
             self.emails = []
-        if not hasattr(self, 'address'):
+        if not hasattr(self, "address"):
             self.address = None
 
     def add_phone(self, phone: str) -> None:

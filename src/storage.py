@@ -16,19 +16,17 @@ class AddressBookStorage:
                 book = pickle.load(f)
                 if not isinstance(book, AddressBook):
                     return AddressBook()
-                # Migrate old records to add missing attributes
                 self._migrate_records(book)
                 return book
         except Exception:
             return AddressBook()
 
-    def _migrate_records(self, book: AddressBook) -> None:
-        """Migrate old records to add missing attributes (emails, address)."""
-        from .models import Record
+    @staticmethod
+    def _migrate_records(book: AddressBook) -> None:
         for record in book.data.values():
-            if not hasattr(record, 'emails'):
+            if not hasattr(record, "emails"):
                 record.emails = []
-            if not hasattr(record, 'address'):
+            if not hasattr(record, "address"):
                 record.address = None
 
     def save(self, book: AddressBook) -> None:

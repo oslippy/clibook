@@ -18,7 +18,11 @@ def parse_input(user_input: str):
     command = Command[command.replace("-", "_")]
     command_name = command.name.replace("_", "-")
 
-    if command in (Command.ADD, Command.ADD_BIRTHDAY, Command.ADD_EMAIL, Command.REMOVE_EMAIL) and len(args) != 2:
+    if (
+        command
+        in (Command.ADD, Command.ADD_BIRTHDAY, Command.ADD_EMAIL, Command.REMOVE_EMAIL)
+        and len(args) != 2
+    ):
         use_params = (
             f"Use: {command_name} <name> <phone>"
             if command == Command.ADD
@@ -40,7 +44,11 @@ def parse_input(user_input: str):
         raise InvalidInputError(
             f"Your input is incorrect. You forgot additional parameters. {use_params}"
         )
-    elif command in (Command.PHONE, Command.SHOW_BIRTHDAY, Command.SHOW_EMAIL, Command.SEARCH) and len(args) != 1:
+    elif (
+        command
+        in (Command.PHONE, Command.SHOW_BIRTHDAY, Command.SHOW_EMAIL, Command.SEARCH)
+        and len(args) != 1
+    ):
         use_params = (
             f"Use: {command_name} <name>"
             if command in (Command.PHONE, Command.SHOW_BIRTHDAY, Command.SHOW_EMAIL)
@@ -64,9 +72,7 @@ def main():
     while True:
         input_command = input("Enter a command: ")
         if not input_command:
-            print(
-                f"Use one of commands: {', '.join(Command.available_commands())}"
-            )
+            print(f"Use one of commands: {', '.join(Command.available_commands())}")
             continue
 
         parsed_input = parse_input(input_command)
