@@ -5,6 +5,7 @@ from typing import Any, Dict, List
 
 from .exceptions import (
     InvalidBirthdayError,
+    InvalidEmailError,
     InvalidNameError,
     InvalidPhoneError,
     PhoneNotFoundError,
@@ -47,23 +48,48 @@ class Birthday(Field):
             parsed_date = datetime.strptime(value.strip(), "%d.%m.%Y")
         except ValueError:
             raise InvalidBirthdayError("Invalid date format. Use DD.MM.YYYY")
-        
+
         today = datetime.now().date()
         birthday_date = parsed_date.date()
-        
+
         if birthday_date > today:
             raise InvalidBirthdayError("Birthday cannot be in the future.")
-        
+
         super().__init__(parsed_date)
 
     def __str__(self):
         return self.value.strftime("%d.%m.%Y")
 
 
+class Email(Field):
+    def __init__(self, value):
+        if not self._validate_email(value):
+            raise InvalidEmailError(
+                "You have entered an invalid email. Please use a valid email format (e.g., user@domain.com)."
+            )
+        super().__init__(value.strip().lower())
+
+    @staticmethod
+    def _validate_email(email: str) -> bool:
+        if not email or not email.strip():
+            return False
+        pattern = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+        return bool(pattern.match(email.strip()))
+
+
+class Address(Field):
+    def __init__(self, value):
+        if not value or not value.strip():
+            raise ValueError("Address cannot be empty.")
+        super().__init__(value.strip())
+
+
 class Record:
     def __init__(self, name):
         self.name = Name(name)
         self.phones = []
+        self.emails = []
+        self.address = None
         self.birthday = None
 
     def add_phone(self, phone: str) -> None:
@@ -89,7 +115,14 @@ class Record:
         self.birthday = Birthday(birthday)
 
     def __str__(self):
-        return f"Contact name: {self.name.value}, phones: {'; '.join(p.value for p in self.phones)}"
+        parts = [f"Contact name: {self.name.value}"]
+        if self.phones:
+            parts.append(f"phones: {'; '.join(p.value for p in self.phones)}")
+        if self.emails:
+            parts.append(f"emails: {'; '.join(e.value for e in self.emails)}")
+        if self.address:
+            parts.append(f"address: {self.address.value}")
+        return ", ".join(parts)
 
 
 class AddressBook(UserDict):
