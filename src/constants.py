@@ -10,6 +10,7 @@ from .handlers import (
     show_all,
     show_phone,
     show_help,
+    search_contacts,
 )
 
 STORAGE_PATH = "data/addressbook.pkl"
@@ -27,6 +28,7 @@ class Command(Enum):
     SHOW_BIRTHDAY = 8, show_birthday
     BIRTHDAYS = 9, birthdays
     HELP = 10, show_help
+    SEARCH = 11, search_contacts
 
     def __init__(self, order, func):
         self.order = order
