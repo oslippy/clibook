@@ -64,7 +64,10 @@ class Record:
     def __init__(self, name):
         self.name = Name(name)
         self.phones = []
+        self.email = None 
+        self.address = None
         self.birthday = None
+        self.note = None
 
     def add_phone(self, phone: str) -> None:
         phone_obj = Phone(phone)
@@ -91,6 +94,15 @@ class Record:
     def __str__(self):
         return f"Contact name: {self.name.value}, phones: {'; '.join(p.value for p in self.phones)}"
 
+    def set_note(self, note: str):
+        self.note = note
+
+    def get_note(self) -> str | None:
+        return self.note
+
+    def remove_note(self):
+        self.note = None
+
 
 class AddressBook(UserDict):
     def add_record(self, record: Record) -> None:
@@ -112,6 +124,16 @@ class AddressBook(UserDict):
     @property
     def records(self) -> Dict[str, Any]:
         return self.data
+
+    def search_by_notes(self, query: str):
+        query = query.lower()
+        results = []
+
+        for record in self.values():
+            if record.note and query in record.note.lower():
+                results.append(record)
+
+        return results
 
     def get_upcoming_birthdays(self) -> List[Dict[str, str]]:
         today_date = datetime.now().date()
