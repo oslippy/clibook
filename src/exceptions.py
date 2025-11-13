@@ -36,3 +36,6 @@ class EmailNotFoundError(ValueError):
 
 class InvalidInputError(ValueError):
     pass
+
+class InvalidDaysError(ValueError):
+    pass

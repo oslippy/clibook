@@ -146,33 +146,44 @@ class AddressBook(UserDict):
     def records(self) -> Dict[str, Any]:
         return self.data
 
-    def get_upcoming_birthdays(self) -> List[Dict[str, str]]:
+    def get_upcoming_birthdays(self, days: int = 7) -> List[Dict[str, str]]:
         today_date = datetime.now().date()
         congratulation_users = []
 
         for record in self.data.values():
-            if record.birthday is not None:
-                if (
-                    record.birthday.value.month == today_date.month
-                    and today_date.day <= record.birthday.value.day
-                    and (record.birthday.value.day - today_date.day) <= 7
-                ):
-                    birthday_current_year = datetime(
-                        year=today_date.year,
-                        month=record.birthday.value.month,
-                        day=record.birthday.value.day,
-                    )
-                    congratulation_date = None
-                    if birthday_current_year.weekday() in range(0, 5):
-                        congratulation_date = birthday_current_year
-                    elif birthday_current_year.weekday() == 5:
-                        congratulation_date = birthday_current_year + timedelta(days=2)
-                    else:
-                        congratulation_date = birthday_current_year + timedelta(days=1)
-                    congratulation_user = {
-                        "name": record.name.value,
-                        "congratulation_date": congratulation_date.strftime("%d.%m.%Y"),
-                    }
-                    congratulation_users.append(congratulation_user)
+            if record.birthday is None:
+                continue
+
+            bday = record.birthday.value
+
+            birthday_this_year = datetime(
+                year=today_date.year,
+                month=bday.month,
+                day=bday.day
+            ).date()
+
+            if birthday_this_year < today_date:
+                next_birthday = datetime(
+                    year=today_date.year + 1,
+                    month=bday.month,
+                    day=bday.day
+                ).date()
+            else:
+                next_birthday = birthday_this_year
+
+            diff_days = (next_birthday - today_date).days
+
+            if 0 <= diff_days <= days:
+                congratulation_date = next_birthday
+
+                if congratulation_date.weekday() == 5:  
+                    congratulation_date += timedelta(days=2)
+                elif congratulation_date.weekday() == 6:
+                    congratulation_date += timedelta(days=1)
+
+                congratulation_users.append({
+                    "name": record.name.value,
+                    "congratulation_date": congratulation_date.strftime("%d.%m.%Y"),
+                })
 
         return congratulation_users

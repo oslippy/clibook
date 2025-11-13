@@ -2,7 +2,7 @@ from typing import List, Dict
 
 from prettytable import PrettyTable
 
-from .exceptions import AddressBookError, RecordNotFoundError
+from .exceptions import AddressBookError, RecordNotFoundError, InvalidDaysError
 from .models import AddressBook, Record
 
 
@@ -14,7 +14,7 @@ _COMMAND_DESCRIPTIONS: Dict[str, str] = {
     "all": "Show all contacts in the address book.",
     "add-birthday": "Add a birthday for a contact.",
     "show-birthday": "Show the birthday for a contact.",
-    "birthdays": "Show upcoming birthdays for the next week.",
+    "birthdays": "Show the upcoming birthdays within the specified number of days.",
     "help": "Show this help message.",
     "close": "Close the program.",
 }
@@ -27,10 +27,12 @@ _COMMAND_USAGE: Dict[str, str] = {
     "all": "all",
     "add-birthday": "add-birthday [name] [DD.MM.YYYY]",
     "show-birthday": "show-birthday [name]",
-    "birthdays": "birthdays",
+    "birthdays": "birthdays [days]",
     "help": "help",
     "close": "close, exit",
 }
+
+_COMMON_COUNT_DAYS = 7
 
 
 def input_error(func):
@@ -125,14 +127,21 @@ def show_all(_: List[str], address_book: AddressBook) -> str:
 
 
 @input_error
-def birthdays(_: List[str], address_book: AddressBook) -> str:
+def birthdays(args: List[str], address_book: AddressBook) -> str:
+    days = 0
+    if len(args) == 0:
+        days = _COMMON_COUNT_DAYS
+    else:
+        if(int(args[0]) < 0):
+            raise InvalidDaysError(f"The number of days cannot be negative.")
+        days = int(args[0])
     table = PrettyTable(
         title="UPCOMING BIRTHDAYS", field_names=["Name", "Congratulation Date"]
     )
     table.add_rows(
         [
             [x["name"], x["congratulation_date"]]
-            for x in address_book.get_upcoming_birthdays()
+            for x in address_book.get_upcoming_birthdays(days)
         ]
     )
     return str(table)
