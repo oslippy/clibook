@@ -94,6 +94,13 @@ class Record:
         self.address = None
         self.birthday = None
 
+    def __setstate__(self, state):
+        self.__dict__ = state
+        if not hasattr(self, 'emails'):
+            self.emails = []
+        if not hasattr(self, 'address'):
+            self.address = None
+
     def add_phone(self, phone: str) -> None:
         phone_obj = Phone(phone)
         self.phones.append(phone_obj)

@@ -15,6 +15,10 @@ _COMMAND_DESCRIPTIONS: Dict[str, str] = {
     "add-birthday": "Add a birthday for a contact.",
     "show-birthday": "Show the birthday for a contact.",
     "birthdays": "Show upcoming birthdays for the next week.",
+    "add-email": "Add an email address to a contact.",
+    "remove-email": "Remove an email address from a contact.",
+    "edit-email": "Edit an email address for a contact.",
+    "show-email": "Show all email addresses for a contact.",
     "search": "Search for contacts by a name substring.",
     "help": "Show this help message.",
     "close": "Close the program.",
@@ -29,6 +33,10 @@ _COMMAND_USAGE: Dict[str, str] = {
     "add-birthday": "add-birthday [name] [DD.MM.YYYY]",
     "show-birthday": "show-birthday [name]",
     "birthdays": "birthdays",
+    "add-email": "add-email [name] [email]",
+    "remove-email": "remove-email [name] [email]",
+    "edit-email": "edit-email [name] [old email] [new email]",
+    "show-email": "show-email [name]",
     "search": "search [query]",
     "help": "help",
     "close": "close, exit",
@@ -109,16 +117,57 @@ def show_phone(args: List[str], address_book: AddressBook) -> str:
 
 
 @input_error
+def add_email(args: List[str], address_book: AddressBook) -> str:
+    name, email = args
+    record = address_book.find(name)
+    if record is None:
+        raise RecordNotFoundError(f"Contact '{name}' doesn't exist.")
+    record.add_email(email)
+    return "Email added."
+
+
+@input_error
+def remove_email(args: List[str], address_book: AddressBook) -> str:
+    name, email = args
+    record = address_book.find(name)
+    if record is None:
+        raise RecordNotFoundError(f"Contact '{name}' doesn't exist.")
+    record.remove_email(email)
+    return "Email removed."
+
+
+@input_error
+def edit_email(args: List[str], address_book: AddressBook) -> str:
+    name, old_email, new_email = args
+    record = address_book.find(name)
+    if record is None:
+        raise RecordNotFoundError(f"Contact '{name}' doesn't exist.")
+    record.edit_email(old_email, new_email)
+    return "Email updated."
+
+
+@input_error
+def show_email(args: List[str], address_book: AddressBook) -> str:
+    name = args[0]
+    record = address_book.find(name)
+    if record is None:
+        raise RecordNotFoundError(f"Contact '{name}' doesn't exist.")
+    return f"{[x.value for x in record.emails]}"
+
+
+@input_error
 def show_all(_: List[str], address_book: AddressBook) -> str:
     if address_book.is_empty:
         raise AddressBookError("Address Book is empty...")
-    table = PrettyTable(title="CONTACTS", field_names=["Name", "Phones", "Birthday"])
+    table = PrettyTable(title="CONTACTS", field_names=["Name", "Phones", "Emails", "Address", "Birthday"])
     table.add_rows(
         [
             [
                 record.name,
                 [x.value for x in record.phones],
-                record.birthday.value.strftime("%d.%m.%Y") if record.birthday else None,
+                [x.value for x in record.emails] if record.emails else "N/A",
+                record.address.value if record.address else "N/A",
+                record.birthday.value.strftime("%d.%m.%Y") if record.birthday else "N/A",
             ]
             for _, record in address_book.records.items()
         ]
@@ -145,10 +194,6 @@ def search_contacts(args: List[str], address_book: AddressBook) -> str:
     """
     Search for contacts by a name substring and display results in a table.
     """
-
-    if not args:
-        raise ValueError("Please provide a search query.")
-    
     query = args[0]
     found_records: List[Record] = address_book.search_contacts(query)
 
@@ -157,10 +202,14 @@ def search_contacts(args: List[str], address_book: AddressBook) -> str:
 
     # Create a table to display results
     table = PrettyTable(
-        title=f"SEARCH RESULTS FOR '{query.upper()}'", 
+        title=f"SEARCH RESULTS FOR '{query.upper()}'",
         field_names=["Name", "Phones", "Emails", "Address", "Birthday"]
     )
-    table.align = "l"
+    table.align["Name"] = "l"
+    table.align["Phones"] = "l"
+    table.align["Emails"] = "l"
+    table.align["Address"] = "l"
+    table.align["Birthday"] = "l"
 
     for record in found_records:
         table.add_row(
@@ -172,7 +221,7 @@ def search_contacts(args: List[str], address_book: AddressBook) -> str:
                 record.birthday.value.strftime("%d.%m.%Y") if record.birthday else "N/A",
             ]
         )
-    
+
     return str(table)
 
 
