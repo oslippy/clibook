@@ -4,6 +4,7 @@ from prettytable import PrettyTable
 
 from .exceptions import (
     AddressBookError,
+    InvalidAddressError,
     InvalidSearchQueryError,
     RecordNotFoundError,
 )
@@ -24,6 +25,10 @@ _COMMAND_DESCRIPTIONS: Dict[str, str] = {
     "edit-email": "Edit an email address for a contact.",
     "show-email": "Show all email addresses for a contact.",
     "search": "Search for contacts by a name substring.",
+    "add-address": "Add an address to a contact.",
+    "edit-address": "Edit an address for a contact.",
+    "remove-address": "Remove the address from a contact.",
+    "show-address": "Show the address for a contact.",
     "add-note": "Add a note to contact.",
     "edit-note": "Edit note of a contact.",
     "delete-note": "Delete note of a contact.",
@@ -46,6 +51,10 @@ _COMMAND_USAGE: Dict[str, str] = {
     "edit-email": "edit-email [name] [old email] [new email]",
     "show-email": "show-email [name]",
     "search": "search [query]",
+    "add-address": "add-address [name] [address]",
+    "edit-address": "edit-address [name] [address]",
+    "remove-address": "remove-address [name]",
+    "show-address": "show-address [name]",
     "add-note": "add-note [name] [text]",
     "edit-note": "edit-note [name] [text]",
     "delete-note": "delete-note [name]",
@@ -168,6 +177,55 @@ def show_email(args: List[str], address_book: AddressBook) -> str:
 
 
 @input_error
+def add_address(args: List[str], address_book: AddressBook) -> str:
+    name, address_text = args
+    record = address_book.find(name)
+    if record is None:
+        raise RecordNotFoundError(f"Contact '{name}' doesn't exist.")
+    if not address_text.strip():
+        raise InvalidAddressError("Address cannot be empty.")
+    message = "Address updated." if record.address else "Address added."
+    record.set_address(address_text)
+    return message
+
+
+@input_error
+def edit_address(args: List[str], address_book: AddressBook) -> str:
+    name, address_text = args
+    record = address_book.find(name)
+    if record is None:
+        raise RecordNotFoundError(f"Contact '{name}' doesn't exist.")
+    if not address_text.strip():
+        raise InvalidAddressError("Address cannot be empty.")
+    message = "Address updated." if record.address else "Address added."
+    record.set_address(address_text)
+    return message
+
+
+@input_error
+def remove_address(args: List[str], address_book: AddressBook) -> str:
+    name = args[0]
+    record = address_book.find(name)
+    if record is None:
+        raise RecordNotFoundError(f"Contact '{name}' doesn't exist.")
+    if record.address is None:
+        raise InvalidAddressError(f"Contact '{name}' does not have an address.")
+    record.remove_address()
+    return "Address removed."
+
+
+@input_error
+def show_address(args: List[str], address_book: AddressBook) -> str:
+    name = args[0]
+    record = address_book.find(name)
+    if record is None:
+        raise RecordNotFoundError(f"Contact '{name}' doesn't exist.")
+    if record.address is None:
+        return f"Contact '{name}' doesn't have an address."
+    return record.address.value
+
+
+@input_error
 def show_all(_: List[str], address_book: AddressBook) -> str:
     if address_book.is_empty:
         raise AddressBookError("Address Book is empty...")
@@ -249,6 +307,7 @@ def search_contacts(args: List[str], address_book: AddressBook) -> str:
                 record.birthday.value.strftime("%d.%m.%Y")
                 if record.birthday
                 else "N/A",
+                record.note or "N/A",
             ]
         )
 

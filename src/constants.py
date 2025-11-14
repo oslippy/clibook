@@ -2,6 +2,7 @@ from enum import Enum
 from typing import List
 
 from .handlers import (
+    add_address,
     add_birthday,
     add_contact,
     add_email,
@@ -9,11 +10,14 @@ from .handlers import (
     birthdays,
     change_contact,
     delete_note,
+    edit_address,
     edit_email,
     edit_note,
+    remove_address,
     remove_email,
     search_contacts,
     search_notes,
+    show_address,
     show_all,
     show_birthday,
     show_email,
@@ -39,12 +43,16 @@ class Command(Enum):
     REMOVE_EMAIL = 11, remove_email
     EDIT_EMAIL = 12, edit_email
     SHOW_EMAIL = 13, show_email
-    SEARCH = 14, search_contacts
-    HELP = 15, show_help
-    ADD_NOTE = 16, add_note
-    EDIT_NOTE = 17, edit_note
-    DELETE_NOTE = 18, delete_note
-    SEARCH_NOTES = 19, search_notes
+    ADD_ADDRESS = 14, add_address
+    EDIT_ADDRESS = 15, edit_address
+    REMOVE_ADDRESS = 16, remove_address
+    SHOW_ADDRESS = 17, show_address
+    SEARCH = 18, search_contacts
+    HELP = 19, show_help
+    ADD_NOTE = 20, add_note
+    EDIT_NOTE = 21, edit_note
+    DELETE_NOTE = 22, delete_note
+    SEARCH_NOTES = 23, search_notes
 
     def __init__(self, order, func):
         self.order = order

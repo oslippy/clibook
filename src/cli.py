@@ -18,44 +18,75 @@ def parse_input(user_input: str):
     command = Command[command.replace("-", "_")]
     command_name = command.name.replace("_", "-")
 
-    needs_two = {
-        Command.ADD: f"Use: {command_name} <name> <phone>",
-        Command.ADD_BIRTHDAY: f"Use: {command_name} <name> <birthday>",
-        Command.ADD_EMAIL: f"Use: {command_name} <name> <email>",
-        Command.REMOVE_EMAIL: f"Use: {command_name} <name> <email>",
+    exact_two = {
+        Command.ADD: "<name> <phone>",
+        Command.ADD_BIRTHDAY: "<name> <birthday>",
+        Command.ADD_EMAIL: "<name> <email>",
+        Command.REMOVE_EMAIL: "<name> <email>",
     }
-    needs_three = {
-        Command.CHANGE: f"Use: {command_name} <name> <old_phone> <new_phone>",
-        Command.EDIT_EMAIL: f"Use: {command_name} <name> <old_email> <new_email>",
+    exact_three = {
+        Command.CHANGE: "<name> <old_phone> <new_phone>",
+        Command.EDIT_EMAIL: "<name> <old_email> <new_email>",
     }
-    needs_one = {
-        Command.PHONE: f"Use: {command_name} <name>",
-        Command.SHOW_BIRTHDAY: f"Use: {command_name} <name>",
-        Command.SHOW_EMAIL: f"Use: {command_name} <name>",
-        Command.DELETE_NOTE: f"Use: {command_name} <name>",
-        Command.SEARCH: f"Use: {command_name} <query>",
-        Command.SEARCH_NOTES: f"Use: {command_name} <query>",
+    at_least_two = {
+        Command.ADD_ADDRESS: "<name> <address>",
+        Command.EDIT_ADDRESS: "<name> <address>",
+        Command.ADD_NOTE: "<name> <note_text>",
+        Command.EDIT_NOTE: "<name> <note_text>",
+    }
+    at_least_one = {
+        Command.PHONE: "<name>",
+        Command.SHOW_BIRTHDAY: "<name>",
+        Command.SHOW_EMAIL: "<name>",
+        Command.SHOW_ADDRESS: "<name>",
+        Command.DELETE_NOTE: "<name>",
+        Command.REMOVE_ADDRESS: "<name>",
+        Command.SEARCH: "<query>",
+        Command.SEARCH_NOTES: "<query>",
+    }
+    no_args = {Command.ALL, Command.BIRTHDAYS, Command.HELP}
+
+    text_commands = {
+        Command.ADD_ADDRESS,
+        Command.EDIT_ADDRESS,
+        Command.ADD_NOTE,
+        Command.EDIT_NOTE,
     }
 
-    if command in needs_two and len(args) != 2:
+    if command in text_commands:
+        if len(args) < 2:
+            allowed = "<address>" if "ADDRESS" in command.name else "<note_text>"
+            raise InvalidInputError(
+                f"Your input is incorrect. Use: {command_name} <name> {allowed}"
+            )
+        name, *text_parts = args
+        joined_text = " ".join(text_parts).strip()
+        if not joined_text:
+            allowed = "<address>" if "ADDRESS" in command.name else "<note_text>"
+            raise InvalidInputError(
+                f"Your input is incorrect. Use: {command_name} <name> {allowed}"
+            )
+        args = [name, joined_text]
+
+    if command in exact_two and len(args) != 2:
         raise InvalidInputError(
-            f"Your input is incorrect. You forgot additional parameters. {needs_two[command]}"
+            f"Your input is incorrect. You forgot additional parameters. Use: {command_name} {exact_two[command]}"
         )
-    elif command in needs_three and len(args) != 3:
+    elif command in exact_three and len(args) != 3:
         raise InvalidInputError(
-            f"Your input is incorrect. You forgot additional parameters. {needs_three[command]}"
+            f"Your input is incorrect. You forgot additional parameters. Use: {command_name} {exact_three[command]}"
         )
-    elif command in needs_one and len(args) < 1:
+    elif command in at_least_two and len(args) < 2:
         raise InvalidInputError(
-            f"Your input is incorrect. You forgot additional parameters. {needs_one[command]}"
+            f"Your input is incorrect. You forgot additional parameters. Use: {command_name} {at_least_two[command]}"
         )
-    elif command in (Command.ADD_NOTE, Command.EDIT_NOTE) and len(args) < 2:
+    elif command in at_least_one and len(args) < 1:
         raise InvalidInputError(
-            f"Your input is incorrect. Use: {command_name} <name> <note_text>"
+            f"Your input is incorrect. You forgot additional parameters. Use: {command_name} {at_least_one[command]}"
         )
-    elif command in (Command.ALL, Command.BIRTHDAYS, Command.HELP) and len(args) != 0:
+    elif command in no_args and len(args) != 0:
         raise InvalidInputError(
-            f"Your input is incorrect. Commands '{Command.ALL}', '{Command.BIRTHDAYS}', and '{Command.HELP}' don't need additional parameters."
+            f"Your input is incorrect. Command '{command_name}' doesn't need additional parameters."
         )
 
     return command, args
