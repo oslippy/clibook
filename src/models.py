@@ -2,6 +2,7 @@ import re
 from collections import UserDict
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
+import phonenumbers
 
 from .exceptions import (
     EmailNotFoundError,
@@ -32,16 +33,37 @@ class Name(Field):
 
 class Phone(Field):
     def __init__(self, value):
-        if not self._validate_phone(value):
-            raise InvalidPhoneError(
-                "You have entered an invalid number. A phone number must contain 10 digits."
-            )
-        super().__init__(value)
+        try:
+            formatted_value = self._validate_phone(value)
+        except phonenumbers.phonenumberutil.NumberParseException as e:
+            raise InvalidPhoneError(f"Could not parse phone number: '{value}'.") from e
+        
+        super().__init__(formatted_value)
 
     @staticmethod
-    def _validate_phone(phone_number: str) -> bool:
-        pattern = re.compile(r"^\d{10}$")
-        return bool(pattern.match(phone_number))
+    def _validate_phone(phone_number: str) -> str:
+        """
+        Validates the phone number using the phonenumbers library.
+        - If a number starts with '+', it's treated as international.
+        - If not, a default region is assumed (e.g., "UA" for Ukraine).
+        Raises:
+            InvalidPhoneError: If the number is not valid.
+        Returns:
+            str: The phone number in E.164 format (e.g., "+380951234567").
+        """
+        # Set a default region for parsing numbers without a country code.
+        default_region = "UA"
+
+        parsed_number = phonenumbers.parse(phone_number, default_region)
+
+        if not phonenumbers.is_valid_number(parsed_number):
+            raise InvalidPhoneError(f"The number '{phone_number}' is not a valid phone number.")
+
+        # Format and return the number in E.164 standard
+        formatted_number = phonenumbers.format_number(
+            parsed_number, phonenumbers.PhoneNumberFormat.E164
+        )
+        return formatted_number
 
 
 class Birthday(Field):
@@ -118,16 +140,28 @@ class Record:
         self.phones[idx] = Phone(new_phone)
 
     def find_phone(self, phone: str) -> Phone:
+        """
+        Finds a phone object by its string value.
+        The input 'phone' string is first normalized to E.164 format
+        before comparison.
+        """
+        try:
+            normalized_phone = Phone._validate_phone(phone)
+        except (InvalidPhoneError, phonenumbers.phonenumberutil.NumberParseException):
+            raise PhoneNotFoundError(f"Phone '{phone}' is not a valid phone format and was not found.") from None
+
         for phone_obj in self.phones:
-            if phone_obj.value == phone:
+            if phone_obj.value == normalized_phone:
                 return phone_obj
-        raise PhoneNotFoundError(f"Phone {phone} not found in record.")
+
+        raise PhoneNotFoundError(f"Phone '{phone}' (normalized to '{normalized_phone}') not found in record {self.name.value}.")
+
 
     def find_email(self, email: str) -> Email:
         for email_obj in self.emails:
             if email_obj.value == email.lower().strip():
                 return email_obj
-        raise EmailNotFoundError(f"Email {email} not found in record.")
+        raise EmailNotFoundError(f"Email {email} not found in record {self.name.value}.")
 
     def add_email(self, email: str) -> None:
         email_obj = Email(email)

@@ -12,8 +12,8 @@ from .models import AddressBook, Record
 
 _COMMAND_DESCRIPTIONS: Dict[str, str] = {
     "hello": "Get a greeting from the bot.",
-    "add": "Add a new contact or a new phone to an existing contact. A phone number must be 10 digits long and contain digits only.",
-    "change": "Change a phone number for a contact. A phone number must be 10 digits long and contain digits only.",
+    "add": "Add a new contact or a new phone to an existing contact. No spaces in phone number allowed.",
+    "change": "Change a phone number for a contact. No spaces in phone numbers allowed.",
     "phone": "Show all phone numbers for a contact.",
     "all": "Show all contacts in the address book.",
     "add-birthday": "Add a birthday for a contact.",
