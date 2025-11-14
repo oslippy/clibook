@@ -31,11 +31,9 @@ def parse_input(user_input: str):
             f"Your input is incorrect. You forgot additional parameters. Use: {command.name} "
             f"<name> <old_phone_number> <new_phone_number>"
         )
-    elif command in (Command.PHONE, Command.SHOW_BIRTHDAY, Command.SEARCH) and len(args) != 1:
+    elif command in (Command.PHONE, Command.SHOW_BIRTHDAY, Command.SEARCH, Command.DELETE_NOTE) and len(args) != 1:
         use_params = ""
-        if command == Command.PHONE:
-            use_params = f"Use: {command.name} <name>"
-        elif command == Command.SHOW_BIRTHDAY:
+        if command in (Command.PHONE, Command.SHOW_BIRTHDAY, Command.DELETE_NOTE):
             use_params = f"Use: {command.name} <name>"
         elif command == Command.SEARCH:
             use_params = f"Use: {command.name} <query>"
@@ -46,6 +44,14 @@ def parse_input(user_input: str):
     elif command in (Command.ALL, Command.BIRTHDAYS, Command.HELP) and len(args) != 0:
         raise InvalidInputError(
             f"Your input is incorrect. Commands '{Command.ALL}', '{Command.BIRTHDAYS}', and '{Command.HELP}' doesn't need additional parameters."
+        )
+    elif command in (Command.ADD_NOTE, Command.EDIT_NOTE) and len(args) < 2:
+        raise InvalidInputError(
+            f"Your input is incorrect. Use: {command.name} <name> <note_text>"
+        )
+    elif command == Command.SEARCH_NOTES and len(args) < 1:
+        raise InvalidInputError(
+            f"Your input is incorrect. You forgot additional parameters. Use: {command.name} <query>"
         )
 
     return command, args

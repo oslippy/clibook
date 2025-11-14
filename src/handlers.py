@@ -198,9 +198,6 @@ def show_help(*args, **kwargs) -> str:
 
 
 def add_note(args: List[str], address_book: AddressBook) -> str:
-    if len(args) < 2:
-        return "Usage: add-note <name> <note_text>"
-
     name = args[0]
     note_text = " ".join(args[1:])
 
@@ -213,9 +210,6 @@ def add_note(args: List[str], address_book: AddressBook) -> str:
 
 
 def edit_note(args: List[str], address_book: AddressBook) -> str:
-    if len(args) < 2:
-        return "Usage: edit-note <name> <new_note_text>"
-
     name = args[0]
     new_text = " ".join(args[1:])
 
@@ -231,9 +225,6 @@ def edit_note(args: List[str], address_book: AddressBook) -> str:
 
 
 def delete_note(args: List[str], address_book: AddressBook) -> str:
-    if len(args) < 1:
-        return "Usage: delete-note <name>"
-
     name = args[0]
     record = address_book.find(name)
     if not record:
