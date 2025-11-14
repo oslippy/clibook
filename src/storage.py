@@ -28,6 +28,8 @@ class AddressBookStorage:
                 record.emails = []
             if not hasattr(record, "address"):
                 record.address = None
+            if not hasattr(record, "note"):
+                record.note = None
 
     def save(self, book: AddressBook) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)

@@ -101,6 +101,8 @@ class Record:
             self.emails = []
         if not hasattr(self, "address"):
             self.address = None
+        if not hasattr(self, "note"):
+            self.note = None
 
     def add_phone(self, phone: str) -> None:
         phone_obj = Phone(phone)
@@ -197,12 +199,12 @@ class AddressBook(UserDict):
     def records(self) -> Dict[str, Any]:
         return self.data
 
-    def search_by_notes(self, query: str):
-        query = query.lower()
-        results = []
+    def search_by_notes(self, query: str) -> List[Record]:
+        lower_query = query.lower()
+        results: List[Record] = []
 
-        for record in self.values():
-            if record.note and query in record.note.lower():
+        for record in self.data.values():
+            if record.note and lower_query in record.note.lower():
                 results.append(record)
 
         return results

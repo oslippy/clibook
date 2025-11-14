@@ -2,7 +2,11 @@ from typing import List, Dict
 
 from prettytable import PrettyTable
 
-from .exceptions import AddressBookError, RecordNotFoundError
+from .exceptions import (
+    AddressBookError,
+    InvalidSearchQueryError,
+    RecordNotFoundError,
+)
 from .models import AddressBook, Record
 
 
@@ -167,25 +171,27 @@ def show_email(args: List[str], address_book: AddressBook) -> str:
 def show_all(_: List[str], address_book: AddressBook) -> str:
     if address_book.is_empty:
         raise AddressBookError("Address Book is empty...")
+    field_names = ["Name", "Phones", "Emails", "Address", "Birthday", "Note"]
     table = PrettyTable(
         title="CONTACTS",
-        field_names=["Name", "Phones", "Emails", "Address", "Birthday"],
+        field_names=field_names,
     )
-    table = PrettyTable(title="CONTACTS", field_names=["Name", "Phones", "Birthday", "Note"])
+    for field in field_names:
+        table.align[field] = "l"
+
     table.add_rows(
         [
             [
-                record.name,
-                [x.value for x in record.phones],
-                [x.value for x in record.emails] if record.emails else "N/A",
+                record.name.value if hasattr(record.name, "value") else record.name,
+                "\n".join([x.value for x in record.phones]) if record.phones else "N/A",
+                "\n".join([x.value for x in record.emails]) if record.emails else "N/A",
                 record.address.value if record.address else "N/A",
                 record.birthday.value.strftime("%d.%m.%Y")
                 if record.birthday
                 else "N/A",
-                record.birthday.value.strftime("%d.%m.%Y") if record.birthday else None,
-                record.note or ""
+                record.note or "N/A",
             ]
-            for _, record in address_book.records.items()
+            for record in address_book.records.values()
         ]
     )
     return str(table)
@@ -212,7 +218,7 @@ def search_contacts(args: List[str], address_book: AddressBook) -> str:
     """
 
     if not args:
-        raise ValueError("Please provide a search query.")
+        raise InvalidSearchQueryError("Please provide a search query.")
 
     query = args[0]
     found_records: List[Record] = address_book.search_contacts(query)
@@ -220,18 +226,14 @@ def search_contacts(args: List[str], address_book: AddressBook) -> str:
     if not found_records:
         return f"No contacts found matching '{query}'."
 
+    field_names = ["Name", "Phones", "Emails", "Address", "Birthday", "Note"]
     # Create a table to display results
     table = PrettyTable(
         title=f"SEARCH RESULTS FOR '{query.upper()}'",
-        field_names=["Name", "Phones", "Emails", "Address", "Birthday"],
-        title=f"SEARCH RESULTS FOR '{query.upper()}'",
-        field_names=["Name", "Phones", "Emails", "Address", "Birthday"]
+        field_names=field_names,
     )
-    table.align["Name"] = "l"
-    table.align["Phones"] = "l"
-    table.align["Emails"] = "l"
-    table.align["Address"] = "l"
-    table.align["Birthday"] = "l"
+    for field in field_names:
+        table.align[field] = "l"
 
     for record in found_records:
         table.add_row(
@@ -267,6 +269,7 @@ def show_help(*args, **kwargs) -> str:
     return str(table)
 
 
+@input_error
 def add_note(args: List[str], address_book: AddressBook) -> str:
     name = args[0]
     note_text = " ".join(args[1:])
@@ -279,6 +282,7 @@ def add_note(args: List[str], address_book: AddressBook) -> str:
     return f"Note added to {name}."
 
 
+@input_error
 def edit_note(args: List[str], address_book: AddressBook) -> str:
     name = args[0]
     new_text = " ".join(args[1:])
@@ -294,6 +298,7 @@ def edit_note(args: List[str], address_book: AddressBook) -> str:
     return f"Note updated for {name}."
 
 
+@input_error
 def delete_note(args: List[str], address_book: AddressBook) -> str:
     name = args[0]
     record = address_book.find(name)
@@ -307,6 +312,7 @@ def delete_note(args: List[str], address_book: AddressBook) -> str:
     return f"Note removed from {name}."
 
 
+@input_error
 def search_notes(args: List[str], address_book: AddressBook) -> str:
     if len(args) < 1:
         return "Usage: search-notes <query>"
@@ -317,20 +323,23 @@ def search_notes(args: List[str], address_book: AddressBook) -> str:
     if not results:
         return "No notes found."
 
+    field_names = ["Name", "Phones", "Emails", "Address", "Birthday", "Note"]
     table = PrettyTable(
-        ["Name", "Phones", "Email", "Address", "Birthday", "Note"]
+        title="SEARCH NOTES RESULTS",
+        field_names=field_names,
     )
-    table.align = "l"
+    for field in field_names:
+        table.align[field] = "l"
 
     for record in results:
-        phones = ", ".join(p.value for p in record.phones)
-        table.add_row([
-            record.name.value,
-            phones,
-            getattr(record.email, "value", record.email or ""),
-            getattr(record.address, "value", record.address or ""),
-            getattr(record.birthday, "value", record.birthday or ""),
-            record.note or ""
-        ])
+        phones = ", ".join(p.value for p in record.phones) if record.phones else "N/A"
+        emails = ", ".join(e.value for e in record.emails) if record.emails else "N/A"
+        address = record.address.value if record.address else "N/A"
+        birthday = (
+            record.birthday.value.strftime("%d.%m.%Y") if record.birthday else "N/A"
+        )
+        table.add_row(
+            [record.name.value, phones, emails, address, birthday, record.note or "N/A"]
+        )
 
     return str(table)

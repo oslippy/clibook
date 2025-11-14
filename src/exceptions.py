@@ -38,5 +38,9 @@ class InvalidAddressError(ValueError):
     pass
 
 
+class InvalidSearchQueryError(ValueError):
+    pass
+
+
 class InvalidInputError(ValueError):
     pass
