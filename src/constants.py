@@ -10,6 +10,7 @@ from .handlers import (
     show_all,
     show_phone,
     show_help,
+    search_contacts,
     add_note,
     edit_note,
     delete_note,
@@ -31,10 +32,11 @@ class Command(Enum):
     SHOW_BIRTHDAY = 8, show_birthday
     BIRTHDAYS = 9, birthdays
     HELP = 10, show_help
-    ADD_NOTE = 11, add_note
-    EDIT_NOTE = 12, edit_note
-    DELETE_NOTE = 13, delete_note
-    SEARCH_NOTES = 14, search_notes
+    SEARCH = 11, search_contacts
+    ADD_NOTE = 12, add_note
+    EDIT_NOTE = 13, edit_note
+    DELETE_NOTE = 14, delete_note
+    SEARCH_NOTES = 15, search_notes
 
     def __init__(self, order, func):
         self.order = order

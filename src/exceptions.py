@@ -26,5 +26,13 @@ class InvalidBirthdayError(ValueError):
     pass
 
 
+class InvalidEmailError(ValueError):
+    pass
+
+
+class EmailNotFoundError(ValueError):
+    pass
+
+
 class InvalidInputError(ValueError):
     pass

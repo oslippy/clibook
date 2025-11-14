@@ -31,12 +31,15 @@ def parse_input(user_input: str):
             f"Your input is incorrect. You forgot additional parameters. Use: {command.name} "
             f"<name> <old_phone_number> <new_phone_number>"
         )
-    elif command in (Command.PHONE, Command.SHOW_BIRTHDAY) and len(args) != 1:
-        use_params = (
-            f"Use: {command.name} <name>"
-            if command.PHONE
-            else f"Use: {command.name} <name>"
-        )
+    elif command in (Command.PHONE, Command.SHOW_BIRTHDAY, Command.SEARCH) and len(args) != 1:
+        use_params = ""
+        if command == Command.PHONE:
+            use_params = f"Use: {command.name} <name>"
+        elif command == Command.SHOW_BIRTHDAY:
+            use_params = f"Use: {command.name} <name>"
+        elif command == Command.SEARCH:
+            use_params = f"Use: {command.name} <query>"
+        
         raise InvalidInputError(
             f"Your input is incorrect. You forgot additional parameters. {use_params}"
         )
