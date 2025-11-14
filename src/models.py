@@ -93,6 +93,7 @@ class Record:
         self.emails = []
         self.address = None
         self.birthday = None
+        self.note = None
 
     def __setstate__(self, state):
         self.__dict__ = state
@@ -152,6 +153,15 @@ class Record:
             parts.append(f"address: {self.address.value}")
         return ", ".join(parts)
 
+    def set_note(self, note: str):
+        self.note = note
+
+    def get_note(self) -> str | None:
+        return self.note
+
+    def remove_note(self):
+        self.note = None
+
 
 class AddressBook(UserDict):
     def add_record(self, record: Record) -> None:
@@ -186,6 +196,16 @@ class AddressBook(UserDict):
     @property
     def records(self) -> Dict[str, Any]:
         return self.data
+
+    def search_by_notes(self, query: str):
+        query = query.lower()
+        results = []
+
+        for record in self.values():
+            if record.note and query in record.note.lower():
+                results.append(record)
+
+        return results
 
     def get_upcoming_birthdays(self) -> List[Dict[str, str]]:
         today_date = datetime.now().date()

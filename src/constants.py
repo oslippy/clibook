@@ -15,6 +15,10 @@ from .handlers import (
     show_phone,
     show_help,
     search_contacts,
+    add_note,
+    edit_note,
+    delete_note,
+    search_notes,
 )
 
 STORAGE_PATH = "data/addressbook.pkl"
@@ -37,6 +41,12 @@ class Command(Enum):
     SHOW_EMAIL = 13, show_email
     SEARCH = 14, search_contacts
     HELP = 15, show_help
+    HELP = 10, show_help
+    SEARCH = 11, search_contacts
+    ADD_NOTE = 12, add_note
+    EDIT_NOTE = 13, edit_note
+    DELETE_NOTE = 14, delete_note
+    SEARCH_NOTES = 15, search_notes
 
     def __init__(self, order, func):
         self.order = order

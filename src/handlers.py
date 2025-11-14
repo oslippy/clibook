@@ -20,6 +20,10 @@ _COMMAND_DESCRIPTIONS: Dict[str, str] = {
     "edit-email": "Edit an email address for a contact.",
     "show-email": "Show all email addresses for a contact.",
     "search": "Search for contacts by a name substring.",
+    "add-note": "Add a note to contact.",
+    "edit-note": "Edit note of a contact.",
+    "delete-note": "Delete note of a contact.",
+    "search-notes": "Search contacts by notes.",
     "help": "Show this help message.",
     "close": "Close the program.",
 }
@@ -38,6 +42,10 @@ _COMMAND_USAGE: Dict[str, str] = {
     "edit-email": "edit-email [name] [old email] [new email]",
     "show-email": "show-email [name]",
     "search": "search [query]",
+    "add-note": "add-note [name] [text]",
+    "edit-note": "edit-note [name] [text]",
+    "delete-note": "delete-note [name]",
+    "search-notes": "search-notes <query>",
     "help": "help",
     "close": "close, exit",
 }
@@ -163,6 +171,7 @@ def show_all(_: List[str], address_book: AddressBook) -> str:
         title="CONTACTS",
         field_names=["Name", "Phones", "Emails", "Address", "Birthday"],
     )
+    table = PrettyTable(title="CONTACTS", field_names=["Name", "Phones", "Birthday", "Note"])
     table.add_rows(
         [
             [
@@ -173,6 +182,8 @@ def show_all(_: List[str], address_book: AddressBook) -> str:
                 record.birthday.value.strftime("%d.%m.%Y")
                 if record.birthday
                 else "N/A",
+                record.birthday.value.strftime("%d.%m.%Y") if record.birthday else None,
+                record.note or ""
             ]
             for _, record in address_book.records.items()
         ]
@@ -199,6 +210,10 @@ def search_contacts(args: List[str], address_book: AddressBook) -> str:
     """
     Search for contacts by a name substring and display results in a table.
     """
+
+    if not args:
+        raise ValueError("Please provide a search query.")
+
     query = args[0]
     found_records: List[Record] = address_book.search_contacts(query)
 
@@ -209,6 +224,8 @@ def search_contacts(args: List[str], address_book: AddressBook) -> str:
     table = PrettyTable(
         title=f"SEARCH RESULTS FOR '{query.upper()}'",
         field_names=["Name", "Phones", "Emails", "Address", "Birthday"],
+        title=f"SEARCH RESULTS FOR '{query.upper()}'",
+        field_names=["Name", "Phones", "Emails", "Address", "Birthday"]
     )
     table.align["Name"] = "l"
     table.align["Phones"] = "l"
@@ -246,5 +263,74 @@ def show_help(*args, **kwargs) -> str:
     for cmd in _COMMAND_DESCRIPTIONS:
         usage = "close, exit" if cmd == "close" else _COMMAND_USAGE[cmd]
         table.add_row([usage, _COMMAND_DESCRIPTIONS[cmd]])
+
+    return str(table)
+
+
+def add_note(args: List[str], address_book: AddressBook) -> str:
+    name = args[0]
+    note_text = " ".join(args[1:])
+
+    record = address_book.find(name)
+    if not record:
+        return f"Contact '{name}' not found."
+
+    record.set_note(note_text)
+    return f"Note added to {name}."
+
+
+def edit_note(args: List[str], address_book: AddressBook) -> str:
+    name = args[0]
+    new_text = " ".join(args[1:])
+
+    record = address_book.find(name)
+    if not record:
+        return f"Contact '{name}' not found."
+
+    if record.note is None:
+        return f"{name} has no note to edit."
+
+    record.set_note(new_text)
+    return f"Note updated for {name}."
+
+
+def delete_note(args: List[str], address_book: AddressBook) -> str:
+    name = args[0]
+    record = address_book.find(name)
+    if not record:
+        return f"Contact '{name}' not found."
+
+    if record.note is None:
+        return f"{name} has no note to delete."
+
+    record.remove_note()
+    return f"Note removed from {name}."
+
+
+def search_notes(args: List[str], address_book: AddressBook) -> str:
+    if len(args) < 1:
+        return "Usage: search-notes <query>"
+
+    query = " ".join(args)
+    results = address_book.search_by_notes(query)
+
+    if not results:
+        return "No notes found."
+
+    table = PrettyTable(
+        ["Name", "Phones", "Email", "Address", "Birthday", "Note"]
+    )
+    table.align = "l"
+
+    for record in results:
+        phones = ", ".join(p.value for p in record.phones)
+        table.add_row([
+            record.name.value,
+            phones,
+            getattr(record.email, "value", record.email or ""),
+            getattr(record.address, "value", record.address or ""),
+            getattr(record.birthday, "value", record.birthday or ""),
+            record.note or ""
+        ])
 
     return str(table)
