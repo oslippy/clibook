@@ -82,6 +82,29 @@ def input_error(func):
     return inner
 
 
+def _build_contacts_table(title: str, include_note: bool = False) -> PrettyTable:
+    field_names = ["Name", "Phones", "Emails", "Address", "Birthday"]
+    if include_note:
+        field_names.append("Note")
+    table = PrettyTable(title=title, field_names=field_names)
+    for field in field_names:
+        table.align[field] = "l"
+    return table
+
+
+def _format_contact_row(record: Record, include_note: bool = False) -> List[str]:
+    row = [
+        record.name.value,
+        "\n".join(phone.value for phone in record.phones) if record.phones else "N/A",
+        "\n".join(email.value for email in record.emails) if record.emails else "N/A",
+        record.address.value if record.address else "N/A",
+        record.birthday.value.strftime("%d.%m.%Y") if record.birthday else "N/A",
+    ]
+    if include_note:
+        row.append(record.note or "N/A")
+    return row
+
+
 @input_error
 def add_contact(args: List[str], address_book: AddressBook) -> str:
     name, phone_number = args
@@ -229,26 +252,10 @@ def show_address(args: List[str], address_book: AddressBook) -> str:
 def show_all(_: List[str], address_book: AddressBook) -> str:
     if address_book.is_empty:
         raise AddressBookError("Address Book is empty...")
-    field_names = ["Name", "Phones", "Emails", "Address", "Birthday", "Note"]
-    table = PrettyTable(
-        title="CONTACTS",
-        field_names=field_names,
-    )
-    for field in field_names:
-        table.align[field] = "l"
-
+    table = _build_contacts_table("CONTACTS", include_note=True)
     table.add_rows(
         [
-            [
-                record.name.value if hasattr(record.name, "value") else record.name,
-                "\n".join([x.value for x in record.phones]) if record.phones else "N/A",
-                "\n".join([x.value for x in record.emails]) if record.emails else "N/A",
-                record.address.value if record.address else "N/A",
-                record.birthday.value.strftime("%d.%m.%Y")
-                if record.birthday
-                else "N/A",
-                record.note or "N/A",
-            ]
+            _format_contact_row(record, include_note=True)
             for record in address_book.records.values()
         ]
     )
@@ -284,32 +291,12 @@ def search_contacts(args: List[str], address_book: AddressBook) -> str:
     if not found_records:
         return f"No contacts found matching '{query}'."
 
-    field_names = ["Name", "Phones", "Emails", "Address", "Birthday", "Note"]
-    # Create a table to display results
-    table = PrettyTable(
-        title=f"SEARCH RESULTS FOR '{query.upper()}'",
-        field_names=field_names,
+    table = _build_contacts_table(
+        title=f"SEARCH RESULTS FOR '{query.upper()}'", include_note=True
     )
-    for field in field_names:
-        table.align[field] = "l"
 
     for record in found_records:
-        table.add_row(
-            [
-                record.name.value,
-                "; ".join([phone.value for phone in record.phones])
-                if record.phones
-                else "N/A",
-                "; ".join([email.value for email in record.emails])
-                if record.emails
-                else "N/A",
-                record.address.value if record.address else "N/A",
-                record.birthday.value.strftime("%d.%m.%Y")
-                if record.birthday
-                else "N/A",
-                record.note or "N/A",
-            ]
-        )
+        table.add_row(_format_contact_row(record, include_note=True))
 
     return str(table)
 
@@ -382,23 +369,9 @@ def search_notes(args: List[str], address_book: AddressBook) -> str:
     if not results:
         return "No notes found."
 
-    field_names = ["Name", "Phones", "Emails", "Address", "Birthday", "Note"]
-    table = PrettyTable(
-        title="SEARCH NOTES RESULTS",
-        field_names=field_names,
-    )
-    for field in field_names:
-        table.align[field] = "l"
+    table = _build_contacts_table("SEARCH NOTES RESULTS", include_note=True)
 
     for record in results:
-        phones = ", ".join(p.value for p in record.phones) if record.phones else "N/A"
-        emails = ", ".join(e.value for e in record.emails) if record.emails else "N/A"
-        address = record.address.value if record.address else "N/A"
-        birthday = (
-            record.birthday.value.strftime("%d.%m.%Y") if record.birthday else "N/A"
-        )
-        table.add_row(
-            [record.name.value, phones, emails, address, birthday, record.note or "N/A"]
-        )
+        table.add_row(_format_contact_row(record, include_note=True))
 
     return str(table)
