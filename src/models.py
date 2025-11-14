@@ -2,6 +2,7 @@ import re
 from collections import UserDict
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
+from enum import Enum
 
 from .exceptions import (
     InvalidBirthdayError,
@@ -12,6 +13,22 @@ from .exceptions import (
     RecordNotFoundError,
 )
 
+
+class EditField(str, Enum):
+    PHONE = "phone"
+    EMAIL = "email"
+    ADDRESS = "address"
+    BIRTHDAY = "birthday"
+
+    @classmethod
+    def from_str(cls, value: str) -> "EditField":
+        value = value.lower()
+        try:
+            return cls(value)
+        except ValueError:
+            raise ValueError(
+                f"Unknown field '{value}'. Allowed: phone, email, address, birthday"
+            )
 
 class Field:
     def __init__(self, value):
@@ -112,6 +129,9 @@ class Record:
         raise PhoneNotFoundError(f"Phone {phone} not found in record.")
 
     def add_birthday(self, birthday: str) -> None:
+        self.birthday = Birthday(birthday)
+
+    def edit_birthday(self, birthday: str) -> None:
         self.birthday = Birthday(birthday)
 
     def __str__(self):

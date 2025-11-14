@@ -26,11 +26,6 @@ def parse_input(user_input: str):
         raise InvalidInputError(
             f"Your input is incorrect. You forgot additional parameters. {use_params}"
         )
-    elif command == Command.CHANGE and len(args) != 3:
-        raise InvalidInputError(
-            f"Your input is incorrect. You forgot additional parameters. Use: {command.name} "
-            f"<name> <old_phone_number> <new_phone_number>"
-        )
     elif command in (Command.PHONE, Command.SHOW_BIRTHDAY) and len(args) != 1:
         use_params = (
             f"Use: {command.name} <name>"
@@ -43,6 +38,18 @@ def parse_input(user_input: str):
     elif command in (Command.ALL, Command.HELP) and len(args) != 0:
         raise InvalidInputError(
             f"Your input is incorrect. Commands '{Command.ALL}', and '{Command.HELP}' doesn't need additional parameters."
+        )
+    elif command == Command.BIRTHDAYS and len(args) > 1:
+        raise InvalidInputError(
+            f"Your input is incorrect. Use: {command.name} [days]"
+        )
+    elif command == Command.EDIT and len(args) < 3:
+        raise InvalidInputError(
+            f"Your input is incorrect. Use: {command.name} <name> <field> <value>"
+        )
+    elif command == Command.DELETE and len(args) != 1:
+        raise InvalidInputError(
+            f"Your input is incorrect. Use: {command.name} <name>"
         )
 
     return command, args

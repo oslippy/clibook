@@ -39,3 +39,6 @@ class InvalidInputError(ValueError):
 
 class InvalidDaysError(ValueError):
     pass
+
+class EditCommandNotFound(ValueError):
+    pass

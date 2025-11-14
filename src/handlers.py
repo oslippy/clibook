@@ -2,8 +2,8 @@ from typing import List, Dict
 
 from prettytable import PrettyTable
 
-from .exceptions import AddressBookError, RecordNotFoundError, InvalidDaysError
-from .models import AddressBook, Record
+from .exceptions import AddressBookError, RecordNotFoundError, InvalidDaysError, EditCommandNotFound
+from .models import AddressBook, Record, EditField
 
 
 _COMMAND_DESCRIPTIONS: Dict[str, str] = {
@@ -17,6 +17,13 @@ _COMMAND_DESCRIPTIONS: Dict[str, str] = {
     "birthdays": "Show the upcoming birthdays within the specified number of days.",
     "help": "Show this help message.",
     "close": "Close the program.",
+    "edit": (
+        "Edit an existing contact field.\n"
+        "Supported fields: phone, email, address, birthday.\n"
+        "For phone/email you must provide old and new values.\n"
+        "For address/birthday only a new value is required."
+    ),
+    "delete": "Delete contact in the address book."
 }
 
 _COMMAND_USAGE: Dict[str, str] = {
@@ -30,6 +37,13 @@ _COMMAND_USAGE: Dict[str, str] = {
     "birthdays": "birthdays [days]",
     "help": "help",
     "close": "close, exit",
+    "edit": (
+        "edit [name] phone [old phone] [new phone]\n"
+        "edit [name] email [old email] [new email]\n"
+        "edit [name] address [new address]\n"
+        "edit [name] birthday [DD.MM.YYYY]"
+    ),
+    "delete": "delete [name]"
 }
 
 _COMMON_COUNT_DAYS = 7
@@ -89,8 +103,7 @@ def show_birthday(args: List[str], address_book: AddressBook) -> str:
     return str(record.birthday)
 
 
-@input_error
-def change_contact(args: List[str], address_book: AddressBook) -> str:
+def change_phone(args: List[str], address_book: AddressBook) -> str:
     name, old_number, new_number = args
     record = address_book.find(name)
     if record is None:
@@ -157,3 +170,59 @@ def show_help(*args, **kwargs) -> str:
         table.add_row([usage, _COMMAND_DESCRIPTIONS[cmd]])
 
     return str(table)
+
+@input_error
+def edit_contact(args: List[str], address_book: AddressBook) -> str:
+    if len(args) < 3:
+        return "Usage: edit <name> <field> <value>"
+
+    name = args[0]
+    field_str = args[1]
+    rest = args[2:]
+
+    try:
+        field = EditField.from_str(field_str)
+    except ValueError as ex:
+        raise EditCommandNotFound(f"Edit '{field_str}' command doesn't exist.")
+
+    record = address_book.find(name)
+    if record is None:
+        raise RecordNotFoundError(f"Contact '{name}' doesn't exist.")
+
+    if field in (EditField.PHONE, EditField.EMAIL):
+        if len(rest) != 2:
+            return (
+                "Usage for phone/email: "
+                "edit <name> phone <old_phone> <new_phone> | "
+                "edit <name> email <old_email> <new_email>"
+            )
+
+        old_value, new_value = rest
+
+        if field == EditField.PHONE:
+            record.edit_phone(old_value, new_value)
+            return (
+                f"Phone for '{name}' updated: '{old_value}' → '{new_value}'"
+            )
+
+        if field == EditField.EMAIL:
+            pass
+
+    if field == EditField.ADDRESS:
+        pass
+
+    if field == EditField.BIRTHDAY:
+        if len(rest) != 1:
+            return "Usage: edit <name> birthday <DD.MM.YYYY>"
+
+        new_birthday_str = rest[0]
+        record.edit_birthday(new_birthday_str)
+        return f"Birthday for '{name}' updated to '{new_birthday_str}'"
+
+    return "Nothing was updated"
+
+@input_error
+def delete_user(args: List[str], address_book: AddressBook):
+    name = args[0]
+    address_book.delete(name)
+    return "Contact was deleted"

@@ -4,12 +4,13 @@ from typing import List
 from .handlers import (
     add_birthday,
     add_contact,
-    change_contact,
+    edit_contact,
     birthdays,
     show_birthday,
     show_all,
     show_phone,
     show_help,
+    delete_user
 )
 
 STORAGE_PATH = "data/addressbook.pkl"
@@ -17,7 +18,7 @@ STORAGE_PATH = "data/addressbook.pkl"
 
 class Command(Enum):
     ADD = 0, add_contact
-    CHANGE = 1, change_contact
+    EDIT = 1, edit_contact
     CLOSE = 2, None
     EXIT = 3, None
     HELLO = 4, None
@@ -27,6 +28,7 @@ class Command(Enum):
     SHOW_BIRTHDAY = 8, show_birthday
     BIRTHDAYS = 9, birthdays
     HELP = 10, show_help
+    DELETE = 11, delete_user
 
     def __init__(self, order, func):
         self.order = order
