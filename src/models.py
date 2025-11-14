@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
 from .exceptions import (
+    EmailNotFoundError,
+    InvalidAddressError,
     InvalidBirthdayError,
     InvalidEmailError,
     InvalidNameError,
@@ -80,7 +82,7 @@ class Email(Field):
 class Address(Field):
     def __init__(self, value):
         if not value or not value.strip():
-            raise ValueError("Address cannot be empty.")
+            raise InvalidAddressError("Address cannot be empty.")
         super().__init__(value.strip())
 
 
@@ -91,6 +93,16 @@ class Record:
         self.emails = []
         self.address = None
         self.birthday = None
+        self.note = None
+
+    def __setstate__(self, state):
+        self.__dict__ = state
+        if not hasattr(self, "emails"):
+            self.emails = []
+        if not hasattr(self, "address"):
+            self.address = None
+        if not hasattr(self, "note"):
+            self.note = None
 
     def add_phone(self, phone: str) -> None:
         phone_obj = Phone(phone)
@@ -111,6 +123,25 @@ class Record:
                 return phone_obj
         raise PhoneNotFoundError(f"Phone {phone} not found in record.")
 
+    def find_email(self, email: str) -> Email:
+        for email_obj in self.emails:
+            if email_obj.value == email.lower().strip():
+                return email_obj
+        raise EmailNotFoundError(f"Email {email} not found in record.")
+
+    def add_email(self, email: str) -> None:
+        email_obj = Email(email)
+        self.emails.append(email_obj)
+
+    def remove_email(self, email: str) -> None:
+        email_to_remove = self.find_email(email)
+        self.emails.remove(email_to_remove)
+
+    def edit_email(self, old_email: str, new_email: str) -> None:
+        email_to_edit = self.find_email(old_email)
+        idx = self.emails.index(email_to_edit)
+        self.emails[idx] = Email(new_email)
+
     def add_birthday(self, birthday: str) -> None:
         self.birthday = Birthday(birthday)
 
@@ -123,6 +154,15 @@ class Record:
         if self.address:
             parts.append(f"address: {self.address.value}")
         return ", ".join(parts)
+
+    def set_note(self, note: str):
+        self.note = note
+
+    def get_note(self) -> str | None:
+        return self.note
+
+    def remove_note(self):
+        self.note = None
 
 
 class AddressBook(UserDict):
@@ -158,6 +198,16 @@ class AddressBook(UserDict):
     @property
     def records(self) -> Dict[str, Any]:
         return self.data
+
+    def search_by_notes(self, query: str) -> List[Record]:
+        lower_query = query.lower()
+        results: List[Record] = []
+
+        for record in self.data.values():
+            if record.note and lower_query in record.note.lower():
+                results.append(record)
+
+        return results
 
     def get_upcoming_birthdays(self) -> List[Dict[str, str]]:
         today_date = datetime.now().date()
