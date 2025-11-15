@@ -47,23 +47,22 @@ To get the application running on your local machine, follow these steps.
 Once installed, you can run the bot from your terminal.
 
 1.  Make sure your virtual environment is activated (see step 2 above).
-2.  Run the main application module:
 
 2.  Run the main application module:
 
     ```bash
-    python -m src.cli
+    python -m main
     ```
     
     Or, if `python` on your system points to an older version (like Python 2), use `python3`:
     
     ```bash
-    python3 -m src.cli
+    python3 -m main
     ```
 
     **When to use which:**
-    * Use `python -m src.cli` on **Windows**, or on any system where you are sure the `python` command runs Python 3.
-    * Use `python3 -m src.cli` on **macOS and Linux**, as `python` often defaults to an older Python 2 installation on those systems.
+    * Use `python -m main` on **Windows**, or on any system where you are sure the `python` command runs Python 3.
+    * Use `python3 -m main` on **macOS and Linux**, as `python` often defaults to an older Python 2 installation on those systems.
 
 3.  You will be greeted with a welcome message and an input prompt. Type `help` to see a full list of commands.
 
