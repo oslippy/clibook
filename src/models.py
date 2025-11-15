@@ -145,6 +145,12 @@ class Record:
     def add_birthday(self, birthday: str) -> None:
         self.birthday = Birthday(birthday)
 
+    def set_address(self, address: str) -> None:
+        self.address = Address(address)
+
+    def remove_address(self) -> None:
+        self.address = None
+
     def __str__(self):
         parts = [f"Contact name: {self.name.value}"]
         if self.phones:
