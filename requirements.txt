@@ -1,1 +1,2 @@
 prettytable==3.16.0
+phonenumbers==9.0.18
