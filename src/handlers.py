@@ -102,10 +102,14 @@ def input_error(func):
     return inner
 
 
-def _build_contacts_table(title: str, include_note: bool = False) -> PrettyTable:
+def _build_contacts_table(
+    title: str, include_note: bool = False, include_tags: bool = False
+) -> PrettyTable:
     field_names = ["Name", "Phones", "Emails", "Address", "Birthday"]
     if include_note:
         field_names.append("Note")
+    if include_tags:
+        field_names.append("Tags")
     table = PrettyTable(title=title, field_names=field_names)
     for field in field_names:
         table.align[field] = "l"
@@ -460,9 +464,6 @@ def search_notes(args: List[str], address_book: AddressBook) -> str:
 
 @input_error
 def search_tags(args: List[str], address_book: AddressBook) -> str:
-    if len(args) < 1:
-        return "Usage: search-tags <tag>"
-
     query = args[0]
     results = address_book.search_by_tags(query)
 
@@ -486,29 +487,13 @@ def sort_tags(args: List[str], address_book: AddressBook) -> str:
     if not sorted_records:
         return "Address Book is empty..."
 
-    table = PrettyTable(
-        title="SORTED NOTES BY TAG ALPHABETICALLY",
-        field_names=["Name", "Phones", "Emails", "Address", "Birthday", "Note", "Tags"],
+    table = _build_contacts_table(
+        title="SORTED NOTES BY TAG ALPHABETICALLY", include_note=True, include_tags=True
     )
-    for field in table.field_names:
-        table.align[field] = "l"
 
     for record in sorted_records:
-        phones = "\n".join(p.value for p in record.phones) if record.phones else "N/A"
-        emails = (
-            "\n".join(e.value for e in record.emails) if record.emails else "N/A"
-        )
-        address = record.address.value if record.address else "N/A"
-        birthday = (
-            record.birthday.value.strftime("%d.%m.%Y")
-            if record.birthday
-            else "N/A"
-        )
-        note = record.note or "N/A"
-        tags = ", ".join(extract_tags(record.note)) if record.note else "N/A"
-
-        table.add_row(
-            [record.name.value, phones, emails, address, birthday, note, tags]
-        )
+        row = _format_contact_row(record, include_note=True)
+        row.append(", ".join(extract_tags(record.note)) if record.note else "N/A")
+        table.add_row(row)
 
     return str(table)
