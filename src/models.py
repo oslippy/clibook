@@ -16,6 +16,10 @@ from .exceptions import (
     RecordNotFoundError,
 )
 
+def extract_tags(note: str) -> list[str]:
+    if not note:
+        return []
+    return re.findall(r"#(\w+)", note)
 
 class EditField(str, Enum):
     PHONE = "phone"
@@ -269,6 +273,29 @@ class AddressBook(UserDict):
 
         return results
 
+    def search_by_tags(self, tag_query: str) -> List[Record]:
+        tag_query = tag_query.lower()
+        results: List[Record] = []
+
+        for record in self.data.values():
+            if record.note:
+                tags = extract_tags(record.note)
+                if any(tag_query in t.lower() for t in tags):
+                    results.append(record)
+
+        return results
+
+    def sort_by_tags_alphabetically(self):
+        """
+        Sort records alphabetically by their tags (based on the first tag).
+        Records without tags go last.
+        """
+        def tag_key(record: Record):
+            tags = extract_tags(record.note) if record.note else []
+            return tags[0].lower() if tags else "zzz"  # "zzz" pushes records without tags to bottom
+
+        return sorted(self.values(), key=tag_key)
+
     def get_upcoming_birthdays(self, days: int = 7) -> List[Dict[str, str]]:
         today_date = datetime.now().date()
         congratulation_users = []
@@ -299,7 +326,7 @@ class AddressBook(UserDict):
             if 0 <= diff_days <= days:
                 congratulation_date = next_birthday
 
-                if congratulation_date.weekday() == 5:  
+                if congratulation_date.weekday() == 5:
                     congratulation_date += timedelta(days=2)
                 elif congratulation_date.weekday() == 6:
                     congratulation_date += timedelta(days=1)

@@ -43,6 +43,7 @@ def parse_input(user_input: str):
         Command.REMOVE_ADDRESS: "<name>",
         Command.DELETE: "<name>",
         Command.SEARCH: "<query>",
+        Command.SEARCH_TAGS: "<tag>",
     }
     at_least_one = {
         Command.SEARCH_NOTES: "<query>",
@@ -50,7 +51,7 @@ def parse_input(user_input: str):
     optional_one = {
         Command.BIRTHDAYS: "<days>",
     }
-    no_args = {Command.ALL, Command.HELP}
+    no_args = {Command.ALL, Command.HELP, Command.SORT_TAGS}
 
     text_commands = {
         Command.ADD_ADDRESS,

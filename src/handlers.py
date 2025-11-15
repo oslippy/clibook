@@ -7,10 +7,10 @@ from .exceptions import (
     InvalidAddressError,
     InvalidSearchQueryError,
     RecordNotFoundError,
-    InvalidDaysError, 
+    InvalidDaysError,
     EditCommandNotFound
 )
-from .models import AddressBook, Record, EditField
+from .models import AddressBook, Record, EditField, extract_tags
 
 
 _COMMAND_DESCRIPTIONS: Dict[str, str] = {
@@ -34,6 +34,8 @@ _COMMAND_DESCRIPTIONS: Dict[str, str] = {
     "delete-note": "Delete note of a contact.",
     "search-notes": "Search contacts by notes.",
     "birthdays": "Show the upcoming birthdays within the specified number of days.",
+    "search-tags": "Search contacts by tags in notes.",
+    "sort-tags": "Sort contacts by the tags in their notes.",
     "help": "Show this help message.",
     "close": "Close the program.",
     "edit": (
@@ -66,6 +68,8 @@ _COMMAND_USAGE: Dict[str, str] = {
     "edit-note": "edit-note [name] [text]",
     "delete-note": "delete-note [name]",
     "search-notes": "search-notes <query>",
+    "search-tags": "search-tags <tag>",
+    "sort-tags": "sort-tags",
     "help": "help",
     "close": "close, exit",
     "edit": (
@@ -98,10 +102,14 @@ def input_error(func):
     return inner
 
 
-def _build_contacts_table(title: str, include_note: bool = False) -> PrettyTable:
+def _build_contacts_table(
+    title: str, include_note: bool = False, include_tags: bool = False
+) -> PrettyTable:
     field_names = ["Name", "Phones", "Emails", "Address", "Birthday"]
     if include_note:
         field_names.append("Note")
+    if include_tags:
+        field_names.append("Tags")
     table = PrettyTable(title=title, field_names=field_names)
     for field in field_names:
         table.align[field] = "l"
@@ -451,5 +459,41 @@ def search_notes(args: List[str], address_book: AddressBook) -> str:
 
     for record in results:
         table.add_row(_format_contact_row(record, include_note=True))
+
+    return str(table)
+
+@input_error
+def search_tags(args: List[str], address_book: AddressBook) -> str:
+    query = args[0]
+    results = address_book.search_by_tags(query)
+
+    if not results:
+        return f"No notes found with tag '{query}'."
+
+    table = _build_contacts_table(
+        title=f"SEARCH TAGS RESULTS FOR '{query.upper()}'", include_note=True
+    )
+
+    for record in results:
+        table.add_row(_format_contact_row(record, include_note=True))
+
+    return str(table)
+
+
+@input_error
+def sort_tags(args: List[str], address_book: AddressBook) -> str:
+    sorted_records = address_book.sort_by_tags_alphabetically()
+
+    if not sorted_records:
+        return "Address Book is empty..."
+
+    table = _build_contacts_table(
+        title="SORTED NOTES BY TAG ALPHABETICALLY", include_note=True, include_tags=True
+    )
+
+    for record in sorted_records:
+        row = _format_contact_row(record, include_note=True)
+        row.append(", ".join(extract_tags(record.note)) if record.note else "N/A")
+        table.add_row(row)
 
     return str(table)
