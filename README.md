@@ -94,6 +94,8 @@ Command-line personal address book with phones, emails, addresses, birthdays, an
 - `delete-note [name]`
 - `search [query]` – substring match on the contact name.
 - `search-notes [query ...]` – text search inside all notes.
+- `sort-tags` - sort all notes by tags alphabetically.
+- `search-tags [tag]` - search notes by tag.
 
 ### System
 - `help` – list every command (also shown when you type an unknown command).
