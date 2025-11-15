@@ -95,10 +95,8 @@ Command-line personal address book with phones, emails, addresses, birthdays, an
 - `delete-note [name]`
 - `search [query]` – substring match on the contact name.
 - `search-notes [query ...]` – text search inside all notes.
-- `search-tags [tag]` – find contacts whose notes include the hashtag (without `#`).
-- `sort-tags` – list all contacts sorted alphabetically by their first hashtag.
-- `sort-tags` - sort all notes by tags alphabetically.
-- `search-tags [tag]` - search notes by tag.
+- `search-tags [tag]` – find contacts whose notes include the hashtag (omit the leading `#`).
+- `sort-tags` – list contacts sorted by their first tag; records without tags appear last.
 
 ### System
 - `help` – list every command (also shown when you type an unknown command).
