@@ -1,5 +1,5 @@
 from .constants import Command, STORAGE_PATH
-from .handlers import input_error
+from .handlers import input_error, show_help
 from .models import AddressBook
 from .exceptions import InvalidInputError
 from .storage import AddressBookStorage
@@ -11,9 +11,7 @@ def parse_input(user_input: str):
     command = command.upper()
 
     if command not in Command.available_commands():
-        raise InvalidInputError(
-            f"Invalid command. Use one of commands: {', '.join(Command.available_commands())}"
-        )
+        raise InvalidInputError(f"Invalid command.\n{show_help([])}")
 
     command = Command[command.replace("-", "_")]
     command_name = command.name.replace("_", "-")
