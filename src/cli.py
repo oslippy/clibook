@@ -13,8 +13,8 @@ def parse_input(user_input: str):
     if command not in Command.available_commands():
         raise InvalidInputError(f"Invalid command.\n{show_help([])}")
 
-    command = Command[command.replace("-", "_")]
-    command_name = command.name.replace("_", "-")
+    command_enum = Command[command.replace("-", "_")]
+    command_name = command_enum.name.replace("_", "-")
 
     exact_two = {
         Command.ADD: "<name> <phone>",
@@ -23,8 +23,10 @@ def parse_input(user_input: str):
         Command.REMOVE_EMAIL: "<name> <email>",
     }
     exact_three = {
-        Command.CHANGE: "<name> <old_phone> <new_phone>",
         Command.EDIT_EMAIL: "<name> <old_email> <new_email>",
+    }
+    at_least_three = {
+        Command.EDIT: "<name> <field> <value>",
     }
     at_least_two = {
         Command.ADD_ADDRESS: "<name> <address>",
@@ -32,18 +34,24 @@ def parse_input(user_input: str):
         Command.ADD_NOTE: "<name> <note_text>",
         Command.EDIT_NOTE: "<name> <note_text>",
     }
-    at_least_one = {
+    exact_one = {
         Command.PHONE: "<name>",
         Command.SHOW_BIRTHDAY: "<name>",
         Command.SHOW_EMAIL: "<name>",
         Command.SHOW_ADDRESS: "<name>",
         Command.DELETE_NOTE: "<name>",
         Command.REMOVE_ADDRESS: "<name>",
+        Command.DELETE: "<name>",
         Command.SEARCH: "<query>",
+    }
+    at_least_one = {
         Command.SEARCH_NOTES: "<query>",
         Command.SEARCH_TAGS: "<tag>",
     }
-    no_args = {Command.ALL, Command.BIRTHDAYS, Command.HELP, Command.SORT_TAGS}
+    optional_one = {
+        Command.BIRTHDAYS: "<days>",
+    }
+    no_args = {Command.ALL, Command.HELP, Command.SORT_TAGS}
 
     text_commands = {
         Command.ADD_ADDRESS,
@@ -52,43 +60,55 @@ def parse_input(user_input: str):
         Command.EDIT_NOTE,
     }
 
-    if command in text_commands:
+    if command_enum in text_commands:
         if len(args) < 2:
-            allowed = "<address>" if "ADDRESS" in command.name else "<note_text>"
+            allowed = "<address>" if "ADDRESS" in command_enum.name else "<note_text>"
             raise InvalidInputError(
                 f"Your input is incorrect. Use: {command_name} <name> {allowed}"
             )
         name, *text_parts = args
         joined_text = " ".join(text_parts).strip()
         if not joined_text:
-            allowed = "<address>" if "ADDRESS" in command.name else "<note_text>"
+            allowed = "<address>" if "ADDRESS" in command_enum.name else "<note_text>"
             raise InvalidInputError(
                 f"Your input is incorrect. Use: {command_name} <name> {allowed}"
             )
         args = [name, joined_text]
 
-    if command in exact_two and len(args) != 2:
+    if command_enum in exact_two and len(args) != 2:
         raise InvalidInputError(
-            f"Your input is incorrect. You forgot additional parameters. Use: {command_name} {exact_two[command]}"
+            f"Your input is incorrect. You forgot additional parameters. Use: {command_name} {exact_two[command_enum]}"
         )
-    elif command in exact_three and len(args) != 3:
+    elif command_enum in exact_three and len(args) != 3:
         raise InvalidInputError(
-            f"Your input is incorrect. You forgot additional parameters. Use: {command_name} {exact_three[command]}"
+            f"Your input is incorrect. You forgot additional parameters. Use: {command_name} {exact_three[command_enum]}"
         )
-    elif command in at_least_two and len(args) < 2:
+    elif command_enum in at_least_three and len(args) < 3:
         raise InvalidInputError(
-            f"Your input is incorrect. You forgot additional parameters. Use: {command_name} {at_least_two[command]}"
+            f"Your input is incorrect. You forgot additional parameters. Use: {command_name} {at_least_three[command_enum]}"
         )
-    elif command in at_least_one and len(args) < 1:
+    elif command_enum in at_least_two and len(args) < 2:
         raise InvalidInputError(
-            f"Your input is incorrect. You forgot additional parameters. Use: {command_name} {at_least_one[command]}"
+            f"Your input is incorrect. You forgot additional parameters. Use: {command_name} {at_least_two[command_enum]}"
         )
-    elif command in no_args and len(args) != 0:
+    elif command_enum in exact_one and len(args) != 1:
+        raise InvalidInputError(
+            f"Your input is incorrect. You forgot additional parameters. Use: {command_name} {exact_one[command_enum]}"
+        )
+    elif command_enum in at_least_one and len(args) < 1:
+        raise InvalidInputError(
+            f"Your input is incorrect. You forgot additional parameters. Use: {command_name} {at_least_one[command_enum]}"
+        )
+    elif command_enum in optional_one and len(args) > 1:
+        raise InvalidInputError(
+            f"Your input is incorrect. Use: {command_name} [{optional_one[command_enum]}]"
+        )
+    elif command_enum in no_args and len(args) != 0:
         raise InvalidInputError(
             f"Your input is incorrect. Command '{command_name}' doesn't need additional parameters."
         )
 
-    return command, args
+    return command_enum, args
 
 
 def main():
@@ -116,3 +136,7 @@ def main():
             result = command.func(args, address_book=address_book)
             if result is not None:
                 print(result)
+
+
+if __name__ == "__main__":
+    main()

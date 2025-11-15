@@ -8,9 +8,10 @@ from .handlers import (
     add_email,
     add_note,
     birthdays,
-    change_contact,
     delete_note,
+    delete_user,
     edit_address,
+    edit_contact,
     edit_email,
     edit_note,
     remove_address,
@@ -32,7 +33,7 @@ STORAGE_PATH = "data/addressbook.pkl"
 
 class Command(Enum):
     ADD = 0, add_contact
-    CHANGE = 1, change_contact
+    EDIT = 1, edit_contact
     CLOSE = 2, None
     EXIT = 3, None
     HELLO = 4, None
@@ -50,13 +51,14 @@ class Command(Enum):
     REMOVE_ADDRESS = 16, remove_address
     SHOW_ADDRESS = 17, show_address
     SEARCH = 18, search_contacts
-    HELP = 19, show_help
-    ADD_NOTE = 20, add_note
-    EDIT_NOTE = 21, edit_note
-    DELETE_NOTE = 22, delete_note
-    SEARCH_NOTES = 23, search_notes
-    SEARCH_TAGS = 24, search_tags
-    SORT_TAGS = 25, sort_tags
+    ADD_NOTE = 19, add_note
+    EDIT_NOTE = 20, edit_note
+    DELETE_NOTE = 21, delete_note
+    SEARCH_NOTES = 22, search_notes
+    DELETE = 23, delete_user
+    HELP = 24, show_help
+    SEARCH_TAGS = 25, search_tags
+    SORT_TAGS = 26, sort_tags
 
     def __init__(self, order, func):
         self.order = order
