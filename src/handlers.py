@@ -16,7 +16,6 @@ from .models import AddressBook, Record, EditField
 _COMMAND_DESCRIPTIONS: Dict[str, str] = {
     "hello": "Get a greeting from the bot.",
     "add": "Add a new contact or a new phone to an existing contact. No spaces in phone number allowed.",
-    "change": "Change a phone number for a contact. No spaces in phone numbers allowed.",
     "phone": "Show all phone numbers for a contact.",
     "all": "Show all contacts in the address book.",
     "add-birthday": "Add a birthday for a contact.",
@@ -49,7 +48,6 @@ _COMMAND_DESCRIPTIONS: Dict[str, str] = {
 _COMMAND_USAGE: Dict[str, str] = {
     "hello": "hello",
     "add": "add [name] [phone]",
-    "change": "change [name] [old phone] [new phone]",
     "phone": "phone [name]",
     "all": "all",
     "add-birthday": "add-birthday [name] [DD.MM.YYYY]",
@@ -157,15 +155,6 @@ def show_birthday(args: List[str], address_book: AddressBook) -> str:
     if record.birthday is None:
         return f"Contact '{name}' doesn't have a birthday set."
     return str(record.birthday)
-
-
-def change_phone(args: List[str], address_book: AddressBook) -> str:
-    name, old_number, new_number = args
-    record = address_book.find(name)
-    if record is None:
-        raise RecordNotFoundError(f"Contact '{name}' doesn't exist.")
-    record.edit_phone(old_number, new_number)
-    return "Contact changed."
 
 
 @input_error
@@ -374,9 +363,18 @@ def edit_contact(args: List[str], address_book: AddressBook) -> str:
 
         if field == EditField.EMAIL:
             record.edit_email(old_value, new_value)
+            return (
+                f"Email for '{name}' updated: '{old_value}' → '{new_value}'"
+            )
 
     if field == EditField.ADDRESS:
-        pass
+        if not rest:
+            return "Usage: edit <name> address <new address>"
+        new_address = " ".join(rest).strip()
+        if not new_address:
+            raise InvalidAddressError("Address cannot be empty.")
+        record.set_address(new_address)
+        return f"Address for '{name}' updated."
 
     if field == EditField.BIRTHDAY:
         if len(rest) != 1:
