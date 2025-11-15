@@ -8,7 +8,7 @@ from .exceptions import (
     InvalidSearchQueryError,
     RecordNotFoundError,
 )
-from .models import AddressBook, Record
+from .models import AddressBook, Record, extract_tags
 
 
 _COMMAND_DESCRIPTIONS: Dict[str, str] = {
@@ -33,6 +33,8 @@ _COMMAND_DESCRIPTIONS: Dict[str, str] = {
     "edit-note": "Edit note of a contact.",
     "delete-note": "Delete note of a contact.",
     "search-notes": "Search contacts by notes.",
+    "search-tags": "Search contacts by tags in notes.",
+    "sort-tags": "Sort contacts by the tags in their notes.",
     "help": "Show this help message.",
     "close": "Close the program.",
 }
@@ -59,6 +61,8 @@ _COMMAND_USAGE: Dict[str, str] = {
     "edit-note": "edit-note [name] [text]",
     "delete-note": "delete-note [name]",
     "search-notes": "search-notes <query>",
+    "search-tags": "search-tags <tag>",
+    "sort-tags": "sort-tags",
     "help": "help",
     "close": "close, exit",
 }
@@ -373,5 +377,60 @@ def search_notes(args: List[str], address_book: AddressBook) -> str:
 
     for record in results:
         table.add_row(_format_contact_row(record, include_note=True))
+
+    return str(table)
+
+@input_error
+def search_tags(args: List[str], address_book: AddressBook) -> str:
+    if len(args) < 1:
+        return "Usage: search-tags <tag>"
+
+    query = args[0]
+    results = address_book.search_by_tags(query)
+
+    if not results:
+        return f"No notes found with tag '{query}'."
+
+    table = _build_contacts_table(
+        title=f"SEARCH TAGS RESULTS FOR '{query.upper()}'", include_note=True
+    )
+
+    for record in results:
+        table.add_row(_format_contact_row(record, include_note=True))
+
+    return str(table)
+
+
+@input_error
+def sort_tags(args: List[str], address_book: AddressBook) -> str:
+    sorted_records = address_book.sort_by_tags_alphabetically()
+
+    if not sorted_records:
+        return "Address Book is empty..."
+
+    table = PrettyTable(
+        title="SORTED NOTES BY TAG ALPHABETICALLY",
+        field_names=["Name", "Phones", "Emails", "Address", "Birthday", "Note", "Tags"],
+    )
+    for field in table.field_names:
+        table.align[field] = "l"
+
+    for record in sorted_records:
+        phones = "\n".join(p.value for p in record.phones) if record.phones else "N/A"
+        emails = (
+            "\n".join(e.value for e in record.emails) if record.emails else "N/A"
+        )
+        address = record.address.value if record.address else "N/A"
+        birthday = (
+            record.birthday.value.strftime("%d.%m.%Y")
+            if record.birthday
+            else "N/A"
+        )
+        note = record.note or "N/A"
+        tags = ", ".join(extract_tags(record.note)) if record.note else "N/A"
+
+        table.add_row(
+            [record.name.value, phones, emails, address, birthday, note, tags]
+        )
 
     return str(table)

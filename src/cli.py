@@ -41,8 +41,9 @@ def parse_input(user_input: str):
         Command.REMOVE_ADDRESS: "<name>",
         Command.SEARCH: "<query>",
         Command.SEARCH_NOTES: "<query>",
+        Command.SEARCH_TAGS: "<tag>",
     }
-    no_args = {Command.ALL, Command.BIRTHDAYS, Command.HELP}
+    no_args = {Command.ALL, Command.BIRTHDAYS, Command.HELP, Command.SORT_TAGS}
 
     text_commands = {
         Command.ADD_ADDRESS,
