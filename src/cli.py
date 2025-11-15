@@ -22,9 +22,8 @@ def parse_input(user_input: str):
         Command.ADD_EMAIL: "<name> <email>",
         Command.REMOVE_EMAIL: "<name> <email>",
     }
-    exact_three = {
-        Command.CHANGE: "<name> <old_phone> <new_phone>",
-        Command.EDIT_EMAIL: "<name> <old_email> <new_email>",
+    at_least_three = {
+        Command.EDIT: "<name> <field> <value>",
     }
     at_least_two = {
         Command.ADD_ADDRESS: "<name> <address>",
@@ -41,6 +40,7 @@ def parse_input(user_input: str):
         Command.REMOVE_ADDRESS: "<name>",
         Command.SEARCH: "<query>",
         Command.SEARCH_NOTES: "<query>",
+        Command.DELETE: "<name>",
     }
     no_args = {Command.ALL, Command.BIRTHDAYS, Command.HELP}
 
@@ -70,9 +70,15 @@ def parse_input(user_input: str):
         raise InvalidInputError(
             f"Your input is incorrect. You forgot additional parameters. Use: {command_name} {exact_two[command]}"
         )
-    elif command in exact_three and len(args) != 3:
+    elif command in (Command.PHONE, Command.SHOW_BIRTHDAY) and len(args) != 1:
+        use_params = (
+            f"Use: {command.name} <name>"
+            if command.PHONE
+            else f"Use: {command.name} <name>"
+        )
+    elif command in at_least_three and len(args) < 3:
         raise InvalidInputError(
-            f"Your input is incorrect. You forgot additional parameters. Use: {command_name} {exact_three[command]}"
+            f"Your input is incorrect. You forgot additional parameters. Use: {command_name} {at_least_three[command]}"
         )
     elif command in at_least_two and len(args) < 2:
         raise InvalidInputError(

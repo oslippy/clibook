@@ -44,3 +44,9 @@ class InvalidSearchQueryError(ValueError):
 
 class InvalidInputError(ValueError):
     pass
+
+class InvalidDaysError(ValueError):
+    pass
+
+class EditCommandNotFound(ValueError):
+    pass
