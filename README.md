@@ -11,6 +11,7 @@ Command-line personal address book with phones, emails, addresses, birthdays, an
 - **Tag support** – notes can include hashtags (e.g. `call #urgent`); use `search-tags` / `sort-tags` to explore them.
 - **Upcoming birthdays** – `birthdays [days]` shows congratulations for the next *N* days (defaults to 7).
 - **Persistent storage** – contacts are serialized to `data/addressbook.pkl` on exit and automatically reloaded.
+- **Unix-style interaction** – the program follows classic Unix CLI conventions: it waits for user input and responds only to the command provided. Valid commands execute normally, while invalid input triggers a concise help message to guide the user.
 
 ## Installation
 
