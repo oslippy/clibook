@@ -337,6 +337,19 @@ def show_help(*args, **kwargs) -> str:
 
 @input_error
 def edit_contact(args: List[str], address_book: AddressBook) -> str:
+    """
+    Handle the 'edit' command and update a specific field of a contact.
+
+    Supported fields and formats:
+      - phone:    edit <name> phone <old_phone> <new_phone>
+      - email:    edit <name> email <old_email> <new_email>
+      - address:  edit <name> address <new address>
+      - birthday: edit <name> birthday <DD.MM.YYYY>
+
+    Returns a user-friendly message or usage hint, or raises an error
+    if the contact or field cannot be processed.
+    """
+
     if len(args) < 3:
         return "Usage: edit <name> <field> <value>"
 
