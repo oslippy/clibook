@@ -2,9 +2,12 @@ import re
 from collections import UserDict
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
+import phonenumbers
 from enum import Enum
 
 from .exceptions import (
+    EmailNotFoundError,
+    InvalidAddressError,
     InvalidBirthdayError,
     InvalidEmailError,
     InvalidNameError,
@@ -47,16 +50,37 @@ class Name(Field):
 
 class Phone(Field):
     def __init__(self, value):
-        if not self._validate_phone(value):
-            raise InvalidPhoneError(
-                "You have entered an invalid number. A phone number must contain 10 digits."
-            )
-        super().__init__(value)
+        try:
+            formatted_value = self._validate_phone(value)
+        except phonenumbers.phonenumberutil.NumberParseException as e:
+            raise InvalidPhoneError(f"Could not parse phone number: '{value}'.") from e
+        
+        super().__init__(formatted_value)
 
     @staticmethod
-    def _validate_phone(phone_number: str) -> bool:
-        pattern = re.compile(r"^\d{10}$")
-        return bool(pattern.match(phone_number))
+    def _validate_phone(phone_number: str) -> str:
+        """
+        Validates the phone number using the phonenumbers library.
+        - If a number starts with '+', it's treated as international.
+        - If not, a default region is assumed (e.g., "UA" for Ukraine).
+        Raises:
+            InvalidPhoneError: If the number is not valid.
+        Returns:
+            str: The phone number in E.164 format (e.g., "+380951234567").
+        """
+        # Set a default region for parsing numbers without a country code.
+        default_region = "UA"
+
+        parsed_number = phonenumbers.parse(phone_number, default_region)
+
+        if not phonenumbers.is_valid_number(parsed_number):
+            raise InvalidPhoneError(f"The number '{phone_number}' is not a valid phone number.")
+
+        # Format and return the number in E.164 standard
+        formatted_number = phonenumbers.format_number(
+            parsed_number, phonenumbers.PhoneNumberFormat.E164
+        )
+        return formatted_number
 
 
 class Birthday(Field):
@@ -97,7 +121,7 @@ class Email(Field):
 class Address(Field):
     def __init__(self, value):
         if not value or not value.strip():
-            raise ValueError("Address cannot be empty.")
+            raise InvalidAddressError("Address cannot be empty.")
         super().__init__(value.strip())
 
 
@@ -108,6 +132,16 @@ class Record:
         self.emails = []
         self.address = None
         self.birthday = None
+        self.note = None
+
+    def __setstate__(self, state):
+        self.__dict__ = state
+        if not hasattr(self, "emails"):
+            self.emails = []
+        if not hasattr(self, "address"):
+            self.address = None
+        if not hasattr(self, "note"):
+            self.note = None
 
     def add_phone(self, phone: str) -> None:
         phone_obj = Phone(phone)
@@ -123,16 +157,53 @@ class Record:
         self.phones[idx] = Phone(new_phone)
 
     def find_phone(self, phone: str) -> Phone:
+        """
+        Finds a phone object by its string value.
+        The input 'phone' string is first normalized to E.164 format
+        before comparison.
+        """
+        try:
+            normalized_phone = Phone._validate_phone(phone)
+        except (InvalidPhoneError, phonenumbers.phonenumberutil.NumberParseException):
+            raise PhoneNotFoundError(f"Phone '{phone}' is not a valid phone format and was not found.") from None
+
         for phone_obj in self.phones:
-            if phone_obj.value == phone:
+            if phone_obj.value == normalized_phone:
                 return phone_obj
-        raise PhoneNotFoundError(f"Phone {phone} not found in record.")
+
+        raise PhoneNotFoundError(f"Phone '{phone}' (normalized to '{normalized_phone}') not found in record {self.name.value}.")
+
+
+    def find_email(self, email: str) -> Email:
+        for email_obj in self.emails:
+            if email_obj.value == email.lower().strip():
+                return email_obj
+        raise EmailNotFoundError(f"Email {email} not found in record {self.name.value}.")
+
+    def add_email(self, email: str) -> None:
+        email_obj = Email(email)
+        self.emails.append(email_obj)
+
+    def remove_email(self, email: str) -> None:
+        email_to_remove = self.find_email(email)
+        self.emails.remove(email_to_remove)
+
+    def edit_email(self, old_email: str, new_email: str) -> None:
+        email_to_edit = self.find_email(old_email)
+        idx = self.emails.index(email_to_edit)
+        self.emails[idx] = Email(new_email)
 
     def add_birthday(self, birthday: str) -> None:
         self.birthday = Birthday(birthday)
 
     def edit_birthday(self, birthday: str) -> None:
         self.birthday = Birthday(birthday)
+
+    def set_address(self, address: str) -> None:
+        self.address = Address(address)
+
+    def remove_address(self) -> None:
+        self.address = None
 
     def __str__(self):
         parts = [f"Contact name: {self.name.value}"]
@@ -143,6 +214,15 @@ class Record:
         if self.address:
             parts.append(f"address: {self.address.value}")
         return ", ".join(parts)
+
+    def set_note(self, note: str):
+        self.note = note
+
+    def get_note(self) -> str | None:
+        return self.note
+
+    def remove_note(self):
+        self.note = None
 
 
 class AddressBook(UserDict):
@@ -158,6 +238,19 @@ class AddressBook(UserDict):
         else:
             raise RecordNotFoundError(f"Record with name '{name}' not found.")
 
+    def search_contacts(self, query: str) -> List[Record]:
+        """
+        Search for contacts by a name substring (case-insensitive).
+        """
+        results: List[Record] = []
+        lower_query = query.lower()
+
+        for record in self.data.values():
+            if lower_query in record.name.value.lower():
+                results.append(record)
+
+        return results
+
     @property
     def is_empty(self) -> bool:
         return not bool(self.data)
@@ -165,6 +258,16 @@ class AddressBook(UserDict):
     @property
     def records(self) -> Dict[str, Any]:
         return self.data
+
+    def search_by_notes(self, query: str) -> List[Record]:
+        lower_query = query.lower()
+        results: List[Record] = []
+
+        for record in self.data.values():
+            if record.note and lower_query in record.note.lower():
+                results.append(record)
+
+        return results
 
     def get_upcoming_birthdays(self, days: int = 7) -> List[Dict[str, str]]:
         today_date = datetime.now().date()
