@@ -22,6 +22,15 @@ def extract_tags(note: str) -> list[str]:
     return re.findall(r"#(\w+)", note)
 
 class EditField(str, Enum):
+    """
+    Enum representing editable fields of a contact.
+
+    Values:
+        PHONE    – phone numbers list of a contact
+        EMAIL    – email addresses list of a contact
+        ADDRESS  – postal / physical address of a contact
+        BIRTHDAY – birthday date of a contact
+    """
     PHONE = "phone"
     EMAIL = "email"
     ADDRESS = "address"
@@ -29,6 +38,11 @@ class EditField(str, Enum):
 
     @classmethod
     def from_str(cls, value: str) -> "EditField":
+        """
+        Return EditField by string name (case-insensitive).
+
+        Raises ValueError if the field is unknown.
+        """
         value = value.lower()
         try:
             return cls(value)
@@ -295,8 +309,28 @@ class AddressBook(UserDict):
             return tags[0].lower() if tags else "zzz"  # "zzz" pushes records without tags to bottom
 
         return sorted(self.values(), key=tag_key)
-
+    
     def get_upcoming_birthdays(self, days: int = 7) -> List[Dict[str, str]]:
+        """
+        Return contacts with upcoming birthdays within the given number of days.
+
+        The method scans all records that have a birthday set and calculates the next
+        birthday date starting from today. If the birthday in the current year has
+        already passed, the next occurrence in the following year is used.
+
+        If the next birthday falls on a weekend (Saturday or Sunday), the
+        congratulation date is shifted to the following Monday.
+
+        Args:
+            days: Number of days from today (inclusive) to look ahead for upcoming
+                birthdays. Defaults to 7.
+
+        Returns:
+            A list of dictionaries, each containing:
+                - "name": contact name (str)
+                - "congratulation_date": date string in "dd.mm.yyyy" format
+                when congratulations should be sent.
+        """
         today_date = datetime.now().date()
         congratulation_users = []
 
