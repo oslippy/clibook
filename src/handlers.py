@@ -1,3 +1,5 @@
+"""Handlers: business logic for all supported commands and table helpers."""
+
 from typing import List, Dict
 
 from prettytable import PrettyTable
@@ -85,6 +87,11 @@ _COMMON_COUNT_DAYS = 7
 
 
 def input_error(func):
+    """Decorator to catch common input errors and print a concise message.
+
+    Returns:
+        Wrapped function that prints the error and returns None on failure.
+    """
     def inner(*args, **kwargs):
         try:
             return func(*args, **kwargs)
@@ -105,6 +112,16 @@ def input_error(func):
 def _build_contacts_table(
     title: str, include_note: bool = False, include_tags: bool = False
 ) -> PrettyTable:
+    """Build a PrettyTable configured for contacts with optional note/tags columns.
+
+    Args:
+        title: Table title.
+        include_note: Whether to include the Note column.
+        include_tags: Whether to include the Tags column.
+
+    Returns:
+        PrettyTable instance configured for contacts.
+    """
     field_names = ["Name", "Phones", "Emails", "Address", "Birthday"]
     if include_note:
         field_names.append("Note")
@@ -117,6 +134,15 @@ def _build_contacts_table(
 
 
 def _format_contact_row(record: Record, include_note: bool = False) -> List[str]:
+    """Format a single `Record` into a table row.
+
+    Args:
+        record: Contact record to render.
+        include_note: Whether to include the note text.
+
+    Returns:
+        List[str]: Values for the contact table row.
+    """
     row = [
         record.name.value,
         "\n".join(phone.value for phone in record.phones) if record.phones else "N/A",
@@ -131,6 +157,18 @@ def _format_contact_row(record: Record, include_note: bool = False) -> List[str]
 
 @input_error
 def add_contact(args: List[str], address_book: AddressBook) -> str:
+    """Add a new contact or append a phone to an existing one.
+
+    Args:
+        args: [name, phone]
+        address_book: Book to update.
+
+    Returns:
+        Confirmation message.
+
+    Raises:
+        InvalidPhoneError: If phone is invalid.
+    """
     name, phone_number = args
     record = address_book.find(name)
     message = "Contact updated."
@@ -145,6 +183,18 @@ def add_contact(args: List[str], address_book: AddressBook) -> str:
 
 @input_error
 def add_birthday(args: List[str], address_book: AddressBook) -> str:
+    """Set or update a contact's birthday.
+
+    Args:
+        args: [name, DD.MM.YYYY]
+        address_book: Book to update.
+
+    Returns:
+        Confirmation message.
+
+    Raises:
+        RecordNotFoundError, InvalidBirthdayError
+    """
     name, birthday = args
     record = address_book.find(name)
     if record is None:
@@ -156,6 +206,15 @@ def add_birthday(args: List[str], address_book: AddressBook) -> str:
 
 @input_error
 def show_birthday(args: List[str], address_book: AddressBook) -> str:
+    """Show a contact's birthday or a message if it's not set.
+
+    Args:
+        args: [name]
+        address_book: Book to read.
+
+    Returns:
+        Birthday string or info message.
+    """
     name = args[0]
     record = address_book.find(name)
     if record is None:
@@ -167,6 +226,15 @@ def show_birthday(args: List[str], address_book: AddressBook) -> str:
 
 @input_error
 def show_phone(args: List[str], address_book: AddressBook) -> str:
+    """Show all phones for a contact.
+
+    Args:
+        args: [name]
+        address_book: Book to read.
+
+    Returns:
+        List of phone strings formatted as a Python list literal.
+    """
     name = args[0]
     record = address_book.find(name)
     if record is None:
@@ -176,6 +244,18 @@ def show_phone(args: List[str], address_book: AddressBook) -> str:
 
 @input_error
 def add_email(args: List[str], address_book: AddressBook) -> str:
+    """Add an email to a contact.
+
+    Args:
+        args: [name, email]
+        address_book: Book to update.
+
+    Returns:
+        Confirmation message.
+
+    Raises:
+        RecordNotFoundError, InvalidEmailError
+    """
     name, email = args
     record = address_book.find(name)
     if record is None:
@@ -186,6 +266,15 @@ def add_email(args: List[str], address_book: AddressBook) -> str:
 
 @input_error
 def remove_email(args: List[str], address_book: AddressBook) -> str:
+    """Remove an email from a contact.
+
+    Args:
+        args: [name, email]
+        address_book: Book to update.
+
+    Returns:
+        Confirmation message.
+    """
     name, email = args
     record = address_book.find(name)
     if record is None:
@@ -196,6 +285,15 @@ def remove_email(args: List[str], address_book: AddressBook) -> str:
 
 @input_error
 def edit_email(args: List[str], address_book: AddressBook) -> str:
+    """Edit an existing email of a contact.
+
+    Args:
+        args: [name, old_email, new_email]
+        address_book: Book to update.
+
+    Returns:
+        Confirmation message.
+    """
     name, old_email, new_email = args
     record = address_book.find(name)
     if record is None:
@@ -206,6 +304,15 @@ def edit_email(args: List[str], address_book: AddressBook) -> str:
 
 @input_error
 def show_email(args: List[str], address_book: AddressBook) -> str:
+    """Show all emails for a contact.
+
+    Args:
+        args: [name]
+        address_book: Book to read.
+
+    Returns:
+        List of email strings formatted as a Python list literal.
+    """
     name = args[0]
     record = address_book.find(name)
     if record is None:
@@ -215,6 +322,15 @@ def show_email(args: List[str], address_book: AddressBook) -> str:
 
 @input_error
 def add_address(args: List[str], address_book: AddressBook) -> str:
+    """Add or update a contact's address.
+
+    Args:
+        args: [name, address]
+        address_book: Book to update.
+
+    Returns:
+        Confirmation message.
+    """
     name, address_text = args
     record = address_book.find(name)
     if record is None:
@@ -228,6 +344,15 @@ def add_address(args: List[str], address_book: AddressBook) -> str:
 
 @input_error
 def edit_address(args: List[str], address_book: AddressBook) -> str:
+    """Edit a contact's address.
+
+    Args:
+        args: [name, address]
+        address_book: Book to update.
+
+    Returns:
+        Confirmation message.
+    """
     name, address_text = args
     record = address_book.find(name)
     if record is None:
@@ -241,6 +366,15 @@ def edit_address(args: List[str], address_book: AddressBook) -> str:
 
 @input_error
 def remove_address(args: List[str], address_book: AddressBook) -> str:
+    """Remove a contact's address.
+
+    Args:
+        args: [name]
+        address_book: Book to update.
+
+    Returns:
+        Confirmation message.
+    """
     name = args[0]
     record = address_book.find(name)
     if record is None:
@@ -253,6 +387,15 @@ def remove_address(args: List[str], address_book: AddressBook) -> str:
 
 @input_error
 def show_address(args: List[str], address_book: AddressBook) -> str:
+    """Show a contact's address or a message if absent.
+
+    Args:
+        args: [name]
+        address_book: Book to read.
+
+    Returns:
+        Address string or info message.
+    """
     name = args[0]
     record = address_book.find(name)
     if record is None:
@@ -264,6 +407,15 @@ def show_address(args: List[str], address_book: AddressBook) -> str:
 
 @input_error
 def show_all(_: List[str], address_book: AddressBook) -> str:
+    """Display all contacts in a formatted table.
+
+    Args:
+        _ : Unused positional args (kept for uniform handler signature).
+        address_book: Book to read.
+
+    Returns:
+        String representation of the PrettyTable.
+    """
     if address_book.is_empty:
         raise AddressBookError("Address Book is empty...")
     table = _build_contacts_table("CONTACTS", include_note=True)
@@ -278,6 +430,18 @@ def show_all(_: List[str], address_book: AddressBook) -> str:
 
 @input_error
 def birthdays(args: List[str], address_book: AddressBook) -> str:
+    """Show upcoming birthdays within the optional number of days (default 7).
+
+    Args:
+        args: [] or [days]
+        address_book: Book to read.
+
+    Returns:
+        String representation of the PrettyTable.
+
+    Raises:
+        InvalidDaysError: If days is negative.
+    """
     days = 0
     if len(args) == 0:
         days = _COMMON_COUNT_DAYS
@@ -299,8 +463,18 @@ def birthdays(args: List[str], address_book: AddressBook) -> str:
 
 @input_error
 def search_contacts(args: List[str], address_book: AddressBook) -> str:
-    """
-    Search for contacts by a name substring and display results in a table.
+    """Search for contacts by a name substring and display results in a table.
+
+    Args:
+        args: [query] where query is a substring to match (case-insensitive).
+        address_book: Source address book.
+
+    Returns:
+        str: String representation of the PrettyTable with results, or an
+        informative message if nothing is found.
+
+    Raises:
+        InvalidSearchQueryError: If the query is missing.
     """
 
     if not args:
@@ -323,6 +497,11 @@ def search_contacts(args: List[str], address_book: AddressBook) -> str:
 
 
 def show_help(*args, **kwargs) -> str:
+    """Return a help table with commands and descriptions.
+
+    Returns:
+        String representation of the PrettyTable.
+    """
     table = PrettyTable(
         title="AVAILABLE COMMANDS", field_names=["Command", "Description"]
     )
@@ -409,6 +588,15 @@ def edit_contact(args: List[str], address_book: AddressBook) -> str:
 
 @input_error
 def delete_user(args: List[str], address_book: AddressBook):
+    """Delete a contact by name.
+
+    Args:
+        args: [name]
+        address_book: Book to update.
+
+    Returns:
+        Confirmation message.
+    """
     name = args[0]
     address_book.delete(name)
     return "Contact was deleted"
@@ -416,6 +604,15 @@ def delete_user(args: List[str], address_book: AddressBook):
 
 @input_error
 def add_note(args: List[str], address_book: AddressBook) -> str:
+    """Attach a free-form note to a contact (overwrites existing).
+
+    Args:
+        args: [name, text...]
+        address_book: Book to update.
+
+    Returns:
+        Confirmation message or error text.
+    """
     name = args[0]
     note_text = " ".join(args[1:])
 
@@ -429,6 +626,15 @@ def add_note(args: List[str], address_book: AddressBook) -> str:
 
 @input_error
 def edit_note(args: List[str], address_book: AddressBook) -> str:
+    """Edit an existing note of a contact.
+
+    Args:
+        args: [name, text...]
+        address_book: Book to update.
+
+    Returns:
+        Confirmation message or error text.
+    """
     name = args[0]
     new_text = " ".join(args[1:])
 
@@ -445,6 +651,15 @@ def edit_note(args: List[str], address_book: AddressBook) -> str:
 
 @input_error
 def delete_note(args: List[str], address_book: AddressBook) -> str:
+    """Delete a contact's note.
+
+    Args:
+        args: [name]
+        address_book: Book to update.
+
+    Returns:
+        Confirmation message or error text.
+    """
     name = args[0]
     record = address_book.find(name)
     if not record:
@@ -459,6 +674,15 @@ def delete_note(args: List[str], address_book: AddressBook) -> str:
 
 @input_error
 def search_notes(args: List[str], address_book: AddressBook) -> str:
+    """Search contacts by substring inside notes.
+
+    Args:
+        args: [query...]
+        address_book: Book to search.
+
+    Returns:
+        String representation of the PrettyTable or 'No notes found.'.
+    """
     if len(args) < 1:
         return "Usage: search-notes <query>"
 
@@ -477,6 +701,15 @@ def search_notes(args: List[str], address_book: AddressBook) -> str:
 
 @input_error
 def search_tags(args: List[str], address_book: AddressBook) -> str:
+    """Search contacts by hashtag (without '#') contained in their notes.
+
+    Args:
+        args: [tag]
+        address_book: Book to search.
+
+    Returns:
+        String representation of the PrettyTable or message if none found.
+    """
     query = args[0]
     results = address_book.search_by_tags(query)
 
@@ -495,6 +728,15 @@ def search_tags(args: List[str], address_book: AddressBook) -> str:
 
 @input_error
 def sort_tags(args: List[str], address_book: AddressBook) -> str:
+    """List contacts sorted alphabetically by their first tag; empty last.
+
+    Args:
+        args: []
+        address_book: Book to search.
+
+    Returns:
+        String representation of the PrettyTable.
+    """
     sorted_records = address_book.sort_by_tags_alphabetically()
 
     if not sorted_records:
