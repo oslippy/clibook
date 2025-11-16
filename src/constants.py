@@ -1,3 +1,5 @@
+"""Global constants and command registry used by the CLI."""
+
 from enum import Enum
 from typing import List
 
@@ -32,6 +34,7 @@ STORAGE_PATH = "data/addressbook.pkl"
 
 
 class Command(Enum):
+    """Command registry: maps command names to ordering and handler functions."""
     ADD = 0, add_contact
     EDIT = 1, edit_contact
     CLOSE = 2, None
@@ -66,4 +69,9 @@ class Command(Enum):
 
     @classmethod
     def available_commands(cls) -> List[str]:
+        """Return CLI-friendly command names.
+
+        Returns:
+            List[str]: All command names formatted with hyphens.
+        """
         return [x.name.replace("_", "-") for x in cls]

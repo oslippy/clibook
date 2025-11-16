@@ -1,3 +1,5 @@
+"""Entry point for running the package as a module: `python -m src`."""
+
 from .cli import main
 
 

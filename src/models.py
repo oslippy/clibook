@@ -1,3 +1,5 @@
+"""Domain models: fields, records, address book and related utilities."""
+
 import re
 from collections import UserDict
 from datetime import datetime, timedelta
@@ -52,6 +54,11 @@ class EditField(str, Enum):
             )
 
 class Field:
+    """Base value object for strongly-typed Record fields.
+
+    Args:
+        value: Underlying primitive value.
+    """
     def __init__(self, value):
         self.value = value
 
@@ -60,6 +67,11 @@ class Field:
 
 
 class Name(Field):
+    """Contact name with non-empty validation.
+
+    Raises:
+        InvalidNameError: If value is empty.
+    """
     def __init__(self, value):
         if not value or not value.strip():
             raise InvalidNameError("Name cannot be empty.")
@@ -67,16 +79,21 @@ class Name(Field):
 
 
 class Phone(Field):
+    """Validated phone number stored in E.164 format.
+
+    Raises:
+        InvalidPhoneError: If number cannot be parsed/validated.
+    """
     def __init__(self, value):
         try:
-            formatted_value = self._validate_phone(value)
+            formatted_value = self.validate_phone(value)
         except phonenumbers.phonenumberutil.NumberParseException as e:
             raise InvalidPhoneError(f"Could not parse phone number: '{value}'.") from e
-        
+
         super().__init__(formatted_value)
 
     @staticmethod
-    def _validate_phone(phone_number: str) -> str:
+    def validate_phone(phone_number: str) -> str:
         """
         Validates the phone number using the phonenumbers library.
         - If a number starts with '+', it's treated as international.
@@ -102,6 +119,11 @@ class Phone(Field):
 
 
 class Birthday(Field):
+    """Birthday date parsed from DD.MM.YYYY; cannot be in the future.
+
+    Raises:
+        InvalidBirthdayError: On bad format or future date.
+    """
     def __init__(self, value):
         try:
             parsed_date = datetime.strptime(value.strip(), "%d.%m.%Y")
@@ -121,6 +143,11 @@ class Birthday(Field):
 
 
 class Email(Field):
+    """Email address with basic regex validation, stored lowercased.
+
+    Raises:
+        InvalidEmailError: If email format is invalid.
+    """
     def __init__(self, value):
         if not self._validate_email(value):
             raise InvalidEmailError(
@@ -137,6 +164,11 @@ class Email(Field):
 
 
 class Address(Field):
+    """Free-form postal/physical address; non-empty.
+
+    Raises:
+        InvalidAddressError: If address is empty.
+    """
     def __init__(self, value):
         if not value or not value.strip():
             raise InvalidAddressError("Address cannot be empty.")
@@ -144,6 +176,11 @@ class Address(Field):
 
 
 class Record:
+    """Contact record aggregating fields: name, phones, emails, address, birthday, note.
+
+    Args:
+        name: Contact name.
+    """
     def __init__(self, name):
         self.name = Name(name)
         self.phones = []
@@ -162,26 +199,60 @@ class Record:
             self.note = None
 
     def add_phone(self, phone: str) -> None:
+        """Append a validated phone number.
+
+        Args:
+            phone: Phone number in any parseable format.
+
+        Raises:
+            InvalidPhoneError: If the number cannot be parsed/validated.
+        """
         phone_obj = Phone(phone)
         self.phones.append(phone_obj)
 
     def remove_phone(self, phone: str) -> None:
+        """Remove a phone by value (any format acceptable).
+
+        Args:
+            phone: Phone string to remove.
+
+        Raises:
+            PhoneNotFoundError: If the phone is not present.
+            InvalidPhoneError: If the provided phone cannot be normalized.
+        """
         phone_to_remove = self.find_phone(phone)
         self.phones.remove(phone_to_remove)
 
     def edit_phone(self, old_phone: str, new_phone: str) -> None:
+        """Replace an existing phone with a new validated value.
+
+        Args:
+            old_phone: Phone to replace (any acceptable format).
+            new_phone: New phone value (validated).
+
+        Raises:
+            PhoneNotFoundError: If old phone is not present.
+            InvalidPhoneError: If new phone is invalid.
+        """
         phone_to_edit = self.find_phone(old_phone)
         idx = self.phones.index(phone_to_edit)
         self.phones[idx] = Phone(new_phone)
 
     def find_phone(self, phone: str) -> Phone:
-        """
-        Finds a phone object by its string value.
-        The input 'phone' string is first normalized to E.164 format
-        before comparison.
+        """Find a phone object by string value (normalized to E.164).
+
+        Args:
+            phone: Phone to find (any acceptable format).
+
+        Returns:
+            Phone: Stored phone object with normalized value.
+
+        Raises:
+            PhoneNotFoundError: If phone not present in record.
+            InvalidPhoneError: If the input cannot be parsed/normalized.
         """
         try:
-            normalized_phone = Phone._validate_phone(phone)
+            normalized_phone = Phone.validate_phone(phone)
         except (InvalidPhoneError, phonenumbers.phonenumberutil.NumberParseException):
             raise PhoneNotFoundError(f"Phone '{phone}' is not a valid phone format and was not found.") from None
 
@@ -193,37 +264,100 @@ class Record:
 
 
     def find_email(self, email: str) -> Email:
+        """Find an email object by its normalized string value.
+
+        Args:
+            email: Email address to find (case-insensitive).
+
+        Returns:
+            Email: Stored email object.
+
+        Raises:
+            EmailNotFoundError: If email is not present.
+        """
         for email_obj in self.emails:
             if email_obj.value == email.lower().strip():
                 return email_obj
         raise EmailNotFoundError(f"Email {email} not found in record {self.name.value}.")
 
     def add_email(self, email: str) -> None:
+        """Append a validated email to the record.
+
+        Args:
+            email: Email string to add.
+
+        Raises:
+            InvalidEmailError: If email is invalid.
+        """
         email_obj = Email(email)
         self.emails.append(email_obj)
 
     def remove_email(self, email: str) -> None:
+        """Remove an email by value.
+
+        Args:
+            email: Email string to remove.
+
+        Raises:
+            EmailNotFoundError: If email is not present.
+        """
         email_to_remove = self.find_email(email)
         self.emails.remove(email_to_remove)
 
     def edit_email(self, old_email: str, new_email: str) -> None:
+        """Replace an existing email with a new validated email.
+
+        Args:
+            old_email: Existing email to be replaced.
+            new_email: New email value.
+
+        Raises:
+            EmailNotFoundError: If old email is not present.
+            InvalidEmailError: If new email is invalid.
+        """
         email_to_edit = self.find_email(old_email)
         idx = self.emails.index(email_to_edit)
         self.emails[idx] = Email(new_email)
 
     def add_birthday(self, birthday: str) -> None:
+        """Set birthday from a DD.MM.YYYY string.
+
+        Args:
+            birthday: Date string in DD.MM.YYYY format.
+
+        Raises:
+            InvalidBirthdayError: On bad format or future date.
+        """
         self.birthday = Birthday(birthday)
 
     def edit_birthday(self, birthday: str) -> None:
+        """Update birthday from a DD.MM.YYYY string.
+
+        Args:
+            birthday: Date string in DD.MM.YYYY format.
+
+        Raises:
+            InvalidBirthdayError: On bad format or future date.
+        """
         self.birthday = Birthday(birthday)
 
     def set_address(self, address: str) -> None:
+        """Set or update address.
+
+        Args:
+            address: Free-form address text.
+
+        Raises:
+            InvalidAddressError: If address is empty.
+        """
         self.address = Address(address)
 
     def remove_address(self) -> None:
+        """Remove address from the record."""
         self.address = None
 
     def __str__(self):
+        """Return a compact string representation of the record."""
         parts = [f"Contact name: {self.name.value}"]
         if self.phones:
             parts.append(f"phones: {'; '.join(p.value for p in self.phones)}")
@@ -234,23 +368,56 @@ class Record:
         return ", ".join(parts)
 
     def set_note(self, note: str):
+        """Set or replace a free-form note.
+
+        Args:
+            note: Note text to set.
+        """
         self.note = note
 
     def get_note(self) -> str | None:
+        """Return current note text or None.
+
+        Returns:
+            str | None: Note text if present.
+        """
         return self.note
 
     def remove_note(self):
+        """Delete the note from the record."""
         self.note = None
 
 
 class AddressBook(UserDict):
+    """Collection of records with search/sort helpers and birthday calculations."""
     def add_record(self, record: Record) -> None:
+        """Insert or overwrite a record by its name key.
+
+        Args:
+            record: The contact record to store.
+        """
         self.data[record.name.value] = record
 
     def find(self, name: str) -> Record:
+        """Return a record by exact name or None if not found.
+
+        Args:
+            name: Exact contact name key.
+
+        Returns:
+            Record | None: Matching record or None.
+        """
         return self.data.get(name)
 
     def delete(self, name: str) -> None:
+        """Delete a record by name or raise if absent.
+
+        Args:
+            name: Exact contact name key to delete.
+
+        Raises:
+            RecordNotFoundError: If the name is not present.
+        """
         if name in self.data:
             del self.data[name]
         else:
@@ -259,6 +426,12 @@ class AddressBook(UserDict):
     def search_contacts(self, query: str) -> List[Record]:
         """
         Search for contacts by a name substring (case-insensitive).
+
+        Args:
+            query: Substring to search in contact names.
+
+        Returns:
+            List[Record]: Matching records.
         """
         results: List[Record] = []
         lower_query = query.lower()
@@ -271,13 +444,31 @@ class AddressBook(UserDict):
 
     @property
     def is_empty(self) -> bool:
+        """True if the address book has no records.
+
+        Returns:
+            bool: Whether the book has no entries.
+        """
         return not bool(self.data)
 
     @property
     def records(self) -> Dict[str, Any]:
+        """Direct access to underlying mapping of name -> Record.
+
+        Returns:
+            Dict[str, Any]: Internal storage mapping names to records.
+        """
         return self.data
 
     def search_by_notes(self, query: str) -> List[Record]:
+        """Search records that contain the query substring in notes.
+
+        Args:
+            query: Substring to match against note text (case-insensitive).
+
+        Returns:
+            List[Record]: Records whose notes contain the substring.
+        """
         lower_query = query.lower()
         results: List[Record] = []
 
@@ -288,6 +479,14 @@ class AddressBook(UserDict):
         return results
 
     def search_by_tags(self, tag_query: str) -> List[Record]:
+        """Search records whose notes contain a hashtag matching the query.
+
+        Args:
+            tag_query: Tag string without the leading '#'.
+
+        Returns:
+            List[Record]: Records whose extracted tags include the query.
+        """
         tag_query = tag_query.lower()
         results: List[Record] = []
 
@@ -303,13 +502,16 @@ class AddressBook(UserDict):
         """
         Sort records alphabetically by their tags (based on the first tag).
         Records without tags go last.
+
+        Returns:
+            List[Record]: Records sorted by first tag (missing tags at the end).
         """
         def tag_key(record: Record):
             tags = extract_tags(record.note) if record.note else []
             return tags[0].lower() if tags else "zzz"  # "zzz" pushes records without tags to bottom
 
         return sorted(self.values(), key=tag_key)
-    
+
     def get_upcoming_birthdays(self, days: int = 7) -> List[Dict[str, str]]:
         """
         Return contacts with upcoming birthdays within the given number of days.
@@ -326,10 +528,10 @@ class AddressBook(UserDict):
                 birthdays. Defaults to 7.
 
         Returns:
-            A list of dictionaries, each containing:
+            List[Dict[str, str]]: Each dict contains:
                 - "name": contact name (str)
                 - "congratulation_date": date string in "dd.mm.yyyy" format
-                when congratulations should be sent.
+                  when congratulations should be sent.
         """
         today_date = datetime.now().date()
         congratulation_users = []

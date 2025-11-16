@@ -1,3 +1,5 @@
+"""Command-line interface: input parsing, validation and command dispatch."""
+
 from .constants import Command, STORAGE_PATH
 from .handlers import input_error, show_help
 from .models import AddressBook
@@ -7,6 +9,18 @@ from .storage import AddressBookStorage
 
 @input_error
 def parse_input(user_input: str):
+    """Parse raw user input into a `(Command, args)` tuple with validation.
+
+    Args:
+        user_input: Line entered by the user.
+
+    Returns:
+        A tuple `(command_enum, args)` where `command_enum` is a member of
+        `Command` and `args` is a list of already-normalized string arguments.
+
+    Raises:
+        InvalidInputError: If command is unknown or arguments count is invalid.
+    """
     command, *args = user_input.strip().split()
     command = command.upper()
 
@@ -112,6 +126,7 @@ def parse_input(user_input: str):
 
 
 def main():
+    """Run the interactive CLI loop."""
     storage = AddressBookStorage(STORAGE_PATH)
     address_book: AddressBook = storage.load_or_new()
     print("Welcome to the assistant bot!")
