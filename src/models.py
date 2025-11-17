@@ -18,10 +18,12 @@ from .exceptions import (
     RecordNotFoundError,
 )
 
+
 def extract_tags(note: str) -> list[str]:
     if not note:
         return []
     return re.findall(r"#(\w+)", note)
+
 
 class EditField(str, Enum):
     """
@@ -50,8 +52,10 @@ class EditField(str, Enum):
             return cls(value)
         except ValueError:
             raise ValueError(
-                f"Unknown field '{value}'. Allowed: phone, email, address, birthday"
+                f"Unknown field '{
+                    value}'. Allowed: phone, email, address, birthday"
             )
+
 
 class Field:
     """Base value object for strongly-typed Record fields.
@@ -59,6 +63,7 @@ class Field:
     Args:
         value: Underlying primitive value.
     """
+
     def __init__(self, value):
         self.value = value
 
@@ -72,6 +77,7 @@ class Name(Field):
     Raises:
         InvalidNameError: If value is empty.
     """
+
     def __init__(self, value):
         if not value or not value.strip():
             raise InvalidNameError("Name cannot be empty.")
@@ -84,11 +90,13 @@ class Phone(Field):
     Raises:
         InvalidPhoneError: If number cannot be parsed/validated.
     """
+
     def __init__(self, value):
         try:
             formatted_value = self.validate_phone(value)
         except phonenumbers.phonenumberutil.NumberParseException as e:
-            raise InvalidPhoneError(f"Could not parse phone number: '{value}'.") from e
+            raise InvalidPhoneError(
+                f"Could not parse phone number: '{value}'.") from e
 
         super().__init__(formatted_value)
 
@@ -109,7 +117,8 @@ class Phone(Field):
         parsed_number = phonenumbers.parse(phone_number, default_region)
 
         if not phonenumbers.is_valid_number(parsed_number):
-            raise InvalidPhoneError(f"The number '{phone_number}' is not a valid phone number.")
+            raise InvalidPhoneError(
+                f"The number '{phone_number}' is not a valid phone number.")
 
         # Format and return the number in E.164 standard
         formatted_number = phonenumbers.format_number(
@@ -124,6 +133,7 @@ class Birthday(Field):
     Raises:
         InvalidBirthdayError: On bad format or future date.
     """
+
     def __init__(self, value):
         try:
             parsed_date = datetime.strptime(value.strip(), "%d.%m.%Y")
@@ -148,6 +158,7 @@ class Email(Field):
     Raises:
         InvalidEmailError: If email format is invalid.
     """
+
     def __init__(self, value):
         if not self._validate_email(value):
             raise InvalidEmailError(
@@ -159,7 +170,8 @@ class Email(Field):
     def _validate_email(email: str) -> bool:
         if not email or not email.strip():
             return False
-        pattern = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+        pattern = re.compile(
+            r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
         return bool(pattern.match(email.strip()))
 
 
@@ -169,6 +181,7 @@ class Address(Field):
     Raises:
         InvalidAddressError: If address is empty.
     """
+
     def __init__(self, value):
         if not value or not value.strip():
             raise InvalidAddressError("Address cannot be empty.")
@@ -181,6 +194,7 @@ class Record:
     Args:
         name: Contact name.
     """
+
     def __init__(self, name):
         self.name = Name(name)
         self.phones = []
@@ -254,14 +268,15 @@ class Record:
         try:
             normalized_phone = Phone.validate_phone(phone)
         except (InvalidPhoneError, phonenumbers.phonenumberutil.NumberParseException):
-            raise PhoneNotFoundError(f"Phone '{phone}' is not a valid phone format and was not found.") from None
+            raise PhoneNotFoundError(
+                f"Phone '{phone}' is not a valid phone format and was not found.") from None
 
         for phone_obj in self.phones:
             if phone_obj.value == normalized_phone:
                 return phone_obj
 
-        raise PhoneNotFoundError(f"Phone '{phone}' (normalized to '{normalized_phone}') not found in record {self.name.value}.")
-
+        raise PhoneNotFoundError(f"Phone '{phone}' (normalized to '{
+                                 normalized_phone}') not found in record {self.name.value}.")
 
     def find_email(self, email: str) -> Email:
         """Find an email object by its normalized string value.
@@ -278,7 +293,8 @@ class Record:
         for email_obj in self.emails:
             if email_obj.value == email.lower().strip():
                 return email_obj
-        raise EmailNotFoundError(f"Email {email} not found in record {self.name.value}.")
+        raise EmailNotFoundError(
+            f"Email {email} not found in record {self.name.value}.")
 
     def add_email(self, email: str) -> None:
         """Append a validated email to the record.
@@ -390,6 +406,7 @@ class Record:
 
 class AddressBook(UserDict):
     """Collection of records with search/sort helpers and birthday calculations."""
+
     def add_record(self, record: Record) -> None:
         """Insert or overwrite a record by its name key.
 
@@ -508,7 +525,8 @@ class AddressBook(UserDict):
         """
         def tag_key(record: Record):
             tags = extract_tags(record.note) if record.note else []
-            return tags[0].lower() if tags else "zzz"  # "zzz" pushes records without tags to bottom
+            # "zzz" pushes records without tags to bottom
+            return tags[0].lower() if tags else "zzz"
 
         return sorted(self.values(), key=tag_key)
 
