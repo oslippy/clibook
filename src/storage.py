@@ -12,6 +12,7 @@ class AddressBookStorage:
     Args:
         path: Filesystem path to the pickle file.
     """
+
     def __init__(self, path: str):
         self.path = Path(path)
 

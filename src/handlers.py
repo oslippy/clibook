@@ -145,10 +145,13 @@ def _format_contact_row(record: Record, include_note: bool = False) -> List[str]
     """
     row = [
         record.name.value,
-        "\n".join(phone.value for phone in record.phones) if record.phones else "N/A",
-        "\n".join(email.value for email in record.emails) if record.emails else "N/A",
+        "\n".join(
+            phone.value for phone in record.phones) if record.phones else "N/A",
+        "\n".join(
+            email.value for email in record.emails) if record.emails else "N/A",
         record.address.value if record.address else "N/A",
-        record.birthday.value.strftime("%d.%m.%Y") if record.birthday else "N/A",
+        record.birthday.value.strftime(
+            "%d.%m.%Y") if record.birthday else "N/A",
     ]
     if include_note:
         row.append(record.note or "N/A")
@@ -380,7 +383,8 @@ def remove_address(args: List[str], address_book: AddressBook) -> str:
     if record is None:
         raise RecordNotFoundError(f"Contact '{name}' doesn't exist.")
     if record.address is None:
-        raise InvalidAddressError(f"Contact '{name}' does not have an address.")
+        raise InvalidAddressError(
+            f"Contact '{name}' does not have an address.")
     record.remove_address()
     return "Address removed."
 
@@ -446,7 +450,7 @@ def birthdays(args: List[str], address_book: AddressBook) -> str:
     if len(args) == 0:
         days = _COMMON_COUNT_DAYS
     else:
-        if(int(args[0]) < 0):
+        if (int(args[0]) < 0):
             raise InvalidDaysError(f"The number of days cannot be negative.")
         days = int(args[0])
     table = PrettyTable(
@@ -513,6 +517,7 @@ def show_help(*args, **kwargs) -> str:
         table.add_row([usage, _COMMAND_DESCRIPTIONS[cmd]])
 
     return str(table)
+
 
 @input_error
 def edit_contact(args: List[str], address_book: AddressBook) -> str:
@@ -585,6 +590,7 @@ def edit_contact(args: List[str], address_book: AddressBook) -> str:
         return f"Birthday for '{name}' updated to '{new_birthday_str}'"
 
     return "Nothing was updated"
+
 
 @input_error
 def delete_user(args: List[str], address_book: AddressBook):
@@ -699,6 +705,7 @@ def search_notes(args: List[str], address_book: AddressBook) -> str:
 
     return str(table)
 
+
 @input_error
 def search_tags(args: List[str], address_book: AddressBook) -> str:
     """Search contacts by hashtag (without '#') contained in their notes.
@@ -748,7 +755,8 @@ def sort_tags(args: List[str], address_book: AddressBook) -> str:
 
     for record in sorted_records:
         row = _format_contact_row(record, include_note=True)
-        row.append(", ".join(extract_tags(record.note)) if record.note else "N/A")
+        row.append(", ".join(extract_tags(record.note))
+                   if record.note else "N/A")
         table.add_row(row)
 
     return str(table)
